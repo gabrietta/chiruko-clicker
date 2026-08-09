@@ -1,0 +1,142 @@
+import type { AchievementDefinition } from '../types/game'
+import { SHOP_ITEMS } from './gameConfig'
+import {
+  DEVOTION_ACHIEVEMENT_ID,
+  DEVOTION_SATISFACTION,
+  THANK_YOU_ACHIEVEMENT_ID,
+  THANK_YOU_SATISFACTION,
+  WORLD_CULT_ACHIEVEMENT_ID,
+  WORLD_CULT_SATISFACTION,
+} from './memorials'
+
+const FACILITY_MILESTONE_ACHIEVEMENTS: AchievementDefinition[] = SHOP_ITEMS.flatMap((item) => [
+  {
+    id: `${item.id}-10`,
+    name: `${item.name}・十景`,
+    description: `${item.name}を10個所有する`,
+    flavor: '最初の節目。生産効率が1.4倍になった。',
+    icon: '十',
+    metric: 'itemOwned',
+    itemId: item.id,
+    target: 10,
+  },
+  {
+    id: `${item.id}-25`,
+    name: `${item.name}・二十五景`,
+    description: `${item.name}を25個所有する`,
+    flavor: '見渡す限り、同じ設備。さらに生産1.4倍。',
+    icon: '廿',
+    metric: 'itemOwned',
+    itemId: item.id,
+    target: 25,
+  },
+  {
+    id: `${item.id}-50`,
+    name: `${item.name}・五十景`,
+    description: `${item.name}を50個所有する`,
+    flavor: 'もう数えるより祈る方が早い。さらに生産1.4倍。',
+    icon: '伍',
+    metric: 'itemOwned',
+    itemId: item.id,
+    target: 50,
+  },
+])
+
+// 実績を追加するときは、この配列へ1項目追加します。
+// 各実績は1つにつき自動生産を1%強化します。
+export const ACHIEVEMENTS: AchievementDefinition[] = [
+  { id: 'first-touch', name: '救済の第一歩', description: 'ちる子を1回さわる', flavor: 'すべては、ひとさわりから。', icon: '☝', metric: 'manualClicks', target: 1 },
+  { id: 'touch-50', name: 'なでなで入門', description: 'ちる子を50回さわる', flavor: '作法が板についてきましたの。', icon: '♡', metric: 'manualClicks', target: 50 },
+  { id: 'touch-500', name: '無心の手', description: 'ちる子を500回さわる', flavor: '手が独立した意思を持ちはじめた。', icon: '✋', metric: 'manualClicks', target: 500 },
+  { id: 'touch-2000', name: 'おでこ保全委員会', description: 'ちる子を2,000回さわる', flavor: 'そろそろおでこにも休暇を。', icon: '◇', metric: 'manualClicks', target: 2_000, hidden: true },
+  { id: 'touch-10000', name: 'なでマの王', description: 'ちる子を10,000回さわる', flavor: 'なでる者の頂点。教祖のおでこは今日もつやつや。', icon: '王', metric: 'manualClicks', target: 10_000, hidden: true },
+  { id: 'touch-50000', name: '指先の教祖', description: 'ちる子を50,000回さわる', flavor: 'クリックの先に、さらなるおでこが見えます。', icon: '指', metric: 'manualClicks', target: 50_000, hidden: true },
+
+  { id: 'satisfaction-1', name: '小さな満足', description: '累計1満足を集める', flavor: '今日の小さな満足に感謝。', icon: '·', metric: 'totalSatisfaction', target: 1 },
+  { id: 'satisfaction-1000', name: '満足千景', description: '累計1,000満足を集める', flavor: '机のすみが少し騒がしくなった。', icon: '千', metric: 'totalSatisfaction', target: 1_000 },
+  { id: 'satisfaction-10000', name: '町内布教', description: '累計10,000満足を集める', flavor: '近所で満足の噂が立ち始めた。', icon: '町', metric: 'totalSatisfaction', target: 10_000 },
+  { id: 'satisfaction-100000', name: 'ネオサイタマ支部', description: '累計100,000満足を集める', flavor: '支部の所在地は諸説あります。', icon: '都', metric: 'totalSatisfaction', target: 100_000 },
+  { id: 'satisfaction-1000000', name: '満足国家', description: '累計1,000,000満足を集める', flavor: '国歌はまだ決まっていない。', icon: '冠', metric: 'totalSatisfaction', target: 1_000_000 },
+  { id: 'satisfaction-5000000', name: 'すべて遠き満足郷', description: '累計5,000,000満足を集める', flavor: '遠かったような、近かったような。', icon: '∞', metric: 'totalSatisfaction', target: 5_000_000 },
+
+  { id: 'play-1h', name: 'いつもそこにいる', description: '累計1時間プレイする', flavor: 'ちる子は、だいたいここにいます。', icon: '時', metric: 'playSeconds', target: 3_600 },
+  { id: 'play-10h', name: '長い祈り', description: '累計10時間プレイする', flavor: '休憩も満足のうちですわ。', icon: '十', metric: 'playSeconds', target: 36_000 },
+  { id: 'play-24h', name: '満足は一日にして成らず', description: '累計24時間プレイする', flavor: '日付が変わっても、教義は変わりません。', icon: '日', metric: 'playSeconds', target: 86_400, hidden: true },
+
+  { id: 'cps-1', name: '静かな救済', description: '毎秒1満足に到達する', flavor: '何もしなくても、ちょっと嬉しい。', icon: 'Ⅰ', metric: 'perSecond', target: 1 },
+  { id: 'cps-10', name: '止まらぬ祈り', description: '毎秒10満足に到達する', flavor: '祈りが流れ作業になってきた。', icon: 'Ⅹ', metric: 'perSecond', target: 10 },
+  { id: 'cps-100', name: '満足工房', description: '毎秒100満足に到達する', flavor: '工房から甘い気配がする。', icon: '工', metric: 'perSecond', target: 100 },
+  { id: 'cps-1000', name: '祭壇フル稼働', description: '毎秒1,000満足に到達する', flavor: '荘厳さと効率は両立しますの。', icon: '祭', metric: 'perSecond', target: 1_000 },
+  { id: 'cps-9000', name: '満足臨界点', description: '毎秒9,000満足に到達する', flavor: '数字がもう、よく分からない。', icon: '爆', metric: 'perSecond', target: 9_000 },
+
+  { id: 'owned-1', name: 'はじめてのお迎え', description: '商品を1個所有する', flavor: 'ようこそ、満足のある机へ。', icon: '一', metric: 'totalOwned', target: 1 },
+  { id: 'owned-10', name: 'にぎやかな机', description: '商品を合計10個所有する', flavor: '作業領域が少し狭い。', icon: '十', metric: 'totalOwned', target: 10 },
+  { id: 'owned-25', name: 'わちゃわちゃ', description: '商品を合計25個所有する', flavor: 'これを待っていた。', icon: '賑', metric: 'totalOwned', target: 25 },
+  { id: 'owned-50', name: '満足教団', description: '商品を合計50個所有する', flavor: 'もはや個人の机ではない。', icon: '団', metric: 'totalOwned', target: 50 },
+  { id: 'owned-100', name: '机のすみが狭い', description: '商品を合計100個所有する', flavor: '作業スペースは、祈りのためにあります。', icon: '百', metric: 'totalOwned', target: 100 },
+  { id: 'owned-250', name: '満足の街並み', description: '商品を合計250個所有する', flavor: '設備の間を歩いて移動しましょう。', icon: '街', metric: 'totalOwned', target: 250, hidden: true },
+  { id: 'all-types', name: '満足オールスター', description: `${SHOP_ITEMS.length}種類すべての商品を所有する`, flavor: '役者は揃いましたの。', icon: '全', metric: 'uniqueItems', target: SHOP_ITEMS.length },
+
+  { id: 'desktop-friend', name: 'PCのすみの相棒', description: 'デスクトップアクセサリを所有する', flavor: '閉じても、だいたいそこにいる。', icon: 'PC', metric: 'itemOwned', itemId: 'desktop-accessory', target: 1 },
+  { id: 'sora2-director', name: '布教映像監督', description: 'Sora2を所有する', flavor: '映像と音声は完成。教義だけ未完成。', icon: '映', metric: 'itemOwned', itemId: 'sora-2', target: 1 },
+  { id: 'first-believer', name: '最初の信者', description: '満足教の信者を所有する', flavor: '教義はこれから考えます。', icon: '徒', metric: 'itemOwned', itemId: 'believer', target: 1 },
+  { id: 'grand-altar', name: '仮設支部から大聖堂へ', description: '満足教の祭壇を所有する', flavor: '建築確認は取っていない。', icon: '堂', metric: 'itemOwned', itemId: 'altar', target: 1 },
+  { id: 'giant-chiruko', name: '見上げれば教祖', description: '巨大ちる子像を所有する', flavor: '景観条例より満足が優先された。', icon: '像', metric: 'itemOwned', itemId: 'giant-statue', target: 1 },
+  { id: 'sora3-dream', name: 'まだ見ぬ映像世界', description: '架空の進化版Sora3を所有する', flavor: '存在しないなら、満足教で想像すればよい。', icon: '夢', metric: 'itemOwned', itemId: 'sora-3', target: 1, hidden: true },
+  { id: 'sora4-dream-realm', name: '夢想圏の開門', description: 'Sora4を1つ所有する', flavor: '雲の向こう側から、赤い夢が満足を運んできます。', icon: 'S4', metric: 'itemOwned', itemId: 'sora-4', target: 1, hidden: true },
+
+  { id: 'lucky-1', name: '救済の欠片', description: 'きらめく救済を1回つかまえる', flavor: '見逃さないこともまた徳。', icon: '✦', metric: 'luckyEvents', target: 1 },
+  { id: 'lucky-7', name: '七つの救済', description: 'きらめく救済を7回つかまえる', flavor: '七つ集めても願いは自力で。', icon: '七', metric: 'luckyEvents', target: 7, hidden: true },
+  { id: 'lucky-50', name: '救済の常連', description: 'きらめく救済を50回つかまえる', flavor: '見つけるたび、ちる子が少しだけ笑います。', icon: '常', metric: 'luckyEvents', target: 50 },
+  { id: 'lucky-varieties', name: '奇跡の観測者', description: '5種類の救済イベントを体験する', flavor: '記録は取れました。理屈はまだです。', icon: '観', metric: 'luckyVarieties', target: 5, hidden: true },
+  { id: 'buff-combo-2', name: '奇跡の重ねがけ', description: '救済効果を同時に2つ発動する', flavor: 'ありがたさが渋滞しています。', icon: '重', metric: 'luckyCombo', target: 2 },
+  { id: 'buff-combo-3', name: '満足大連鎖', description: '救済効果を同時に3つ発動する', flavor: '数字が跳ねる理由は、もう誰にも分かりません。', icon: '連', metric: 'luckyCombo', target: 3, hidden: true },
+  { id: 'lucky-chain-1', name: '救済は続くよ', description: '満足チェーンを最後までつなぐ', flavor: '次も来る。そう信じて待つのです。', icon: '鎖', metric: 'luckyChains', target: 1, hidden: true },
+
+  { id: 'upgrade-1', name: '初めての御利益', description: '御利益を1個購入する', flavor: '買える御利益は、ありがたい。', icon: '恵', metric: 'upgradesOwned', target: 1 },
+  { id: 'upgrade-6', name: '御利益コレクター', description: '御利益を6個購入する', flavor: 'もはや御利益の棚卸しが必要。', icon: '棚', metric: 'upgradesOwned', target: 6 },
+  { id: 'prestige-1', name: '満足は巡る', description: '初めて再布教する', flavor: '最初から。でも前よりずっと速い。', icon: '巡', metric: 'prestigeCount', target: 1 },
+  { id: 'prestige-3', name: '三巡目の教祖', description: '3回再布教する', flavor: '世界線が増えてきましたわ。', icon: '参', metric: 'prestigeCount', target: 3, hidden: true },
+  { id: 'prestige-10', name: '十巡目の教祖', description: '10回再布教する', flavor: '最初から始めることにも、もう慣れました。', icon: '十', metric: 'prestigeCount', target: 10, hidden: true },
+  { id: 'marks-10', name: '救済印十傑', description: '救済印を10個集める', flavor: '押す場所が足りない。', icon: '印', metric: 'virtueMarks', target: 10 },
+  { id: 'marks-100', name: '百の救済印', description: '救済印を100個集める', flavor: '印は緩やかに、信仰は確かに。', icon: '百', metric: 'virtueMarks', target: 100, hidden: true },
+  { id: 'doctrine-1', name: 'はじめての恒久教義', description: '恒久教義を1個授かる', flavor: '周回しても忘れない、大事な一行。', icon: '典', metric: 'doctrinesOwned', target: 1 },
+  { id: 'doctrine-5', name: '教典編纂者', description: '恒久教義を5個授かる', flavor: '余白のほうが本文より長くなりました。', icon: '編', metric: 'doctrinesOwned', target: 5, hidden: true },
+  { id: 'doctrine-all', name: '教典を揃える者', description: '恒久教義を8個すべて授かる', flavor: 'もう足す教義がありません。たぶん。', icon: '全', metric: 'doctrinesOwned', target: 8, hidden: true },
+
+  { id: 'offline-1', name: '留守番も布教', description: '1回の留守番報酬を受け取る', flavor: '離れているあいだも、満足は育ちます。', icon: '留', metric: 'offlineSessions', target: 1 },
+  { id: 'offline-7', name: '帰る場所は満足', description: '留守番報酬を7回受け取る', flavor: 'おかえりなさい。今日も静かに増えていました。', icon: '帰', metric: 'offlineSessions', target: 7, hidden: true },
+  { id: 'offline-overnight', name: '一晩分の満足', description: '1時間以上の留守番報酬を受け取る', flavor: '眠っているあいだも、教祖は働いていました。', icon: '夜', metric: 'longestOffline', target: 3_600, hidden: true },
+
+  ...FACILITY_MILESTONE_ACHIEVEMENTS,
+  {
+    id: THANK_YOU_ACHIEVEMENT_ID,
+    name: '満足計画・ひとまず完成',
+    description: '累計500兆満足を集める',
+    flavor: 'たくさん遊んでくれて、ありがとう。満足計画はまだまだ続きますの。',
+    icon: '謝',
+    metric: 'totalSatisfaction',
+    target: THANK_YOU_SATISFACTION,
+    hidden: true,
+  },
+  {
+    id: DEVOTION_ACHIEVEMENT_ID,
+    name: '貴方無しでは満足できない',
+    description: '累計5京満足を集める',
+    flavor: '敬虔な信者、ですね。ここまで満たしてくれた貴方へ。',
+    icon: '愛',
+    metric: 'totalSatisfaction',
+    target: DEVOTION_SATISFACTION,
+    hidden: true,
+  },
+  {
+    id: WORLD_CULT_ACHIEVEMENT_ID,
+    name: '世界は満足教になる',
+    description: '累計1秭満足を集める',
+    flavor: '地上は満たされました。では次は、星々へ布教いたしましょう。',
+    icon: '世',
+    metric: 'totalSatisfaction',
+    target: WORLD_CULT_SATISFACTION,
+    hidden: true,
+  },
+]
