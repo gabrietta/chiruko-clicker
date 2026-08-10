@@ -2362,10 +2362,25 @@
     padding-inline: 12px;
   }
 
-  .busy-edition .stage-intro h2::after,
+  .busy-edition .stage-intro h2::after {
+    display: none;
+  }
+
+  /* Keep all three mini Chirkos visible on narrow screens. */
   .satellite-read,
   .satellite-sleep {
-    display: none;
+    width: 64px;
+    height: 64px;
+  }
+
+  .satellite-read {
+    right: 0;
+    top: 3%;
+  }
+
+  .satellite-sleep {
+    left: 0;
+    bottom: 3%;
   }
 
   .satellite-run {
@@ -2381,6 +2396,15 @@
     width: 39%;
     padding: 8px 9px;
     font-size: 8px;
+  }
+
+  /* Keep the rapid-click combo badge clear of Chiruko's dialogue bubble. */
+  .click-combo-meter {
+    left: auto;
+    right: 1%;
+    top: 18%;
+    max-width: 56%;
+    text-align: center;
   }
 
   .busy-edition .tap-hint {
