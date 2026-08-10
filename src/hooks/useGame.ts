@@ -142,6 +142,7 @@ export const useGame = () => {
   const hasScheduledLuckyRef = useRef(false)
   const luckyEventTimesRef = useRef<number[]>([])
   const lastLuckyClaimAtRef = useRef(0)
+  const luckyAssistUsesRef = useRef(0)
   const lastTickRef = useRef(performance.now())
   const playAccumulatorRef = useRef(0)
 
@@ -286,7 +287,9 @@ export const useGame = () => {
     )
     const isFirst = !hasScheduledLuckyRef.current
     const liveBuffCount = activeBuffs.filter((buff) => buff.expiresAt > Date.now()).length
-    const comboAssistActive = liveBuffCount >= config.comboAssistMinActiveBuffs
+    if (liveBuffCount === 0) luckyAssistUsesRef.current = 0
+    const comboAssistActive = liveBuffCount >= config.comboAssistMinActiveBuffs &&
+      luckyAssistUsesRef.current < config.comboAssistUsesPerBuffWindow
     const delay = chainRemaining > 0
       ? 900
       : comboAssistActive
@@ -412,7 +415,10 @@ export const useGame = () => {
       ) * 20,
     ) * getActiveSeason().luckyMultiplier)
     const liveBuffs = activeBuffsRef.current.filter((active) => active.expiresAt > now)
-    const comboAssistActive = liveBuffs.length >= GAME_CONFIG.luckyEvent.comboAssistMinActiveBuffs
+    const comboAssistActive = chainRemaining === 0 &&
+      liveBuffs.length >= GAME_CONFIG.luckyEvent.comboAssistMinActiveBuffs &&
+      luckyAssistUsesRef.current < GAME_CONFIG.luckyEvent.comboAssistUsesPerBuffWindow
+    if (comboAssistActive) luckyAssistUsesRef.current += 1
     const roll = comboAssistActive && Math.random() < GAME_CONFIG.luckyEvent.comboAssistBuffChance
       ? 0.30 + Math.random() * 0.60
       : Math.random()
@@ -496,11 +502,13 @@ export const useGame = () => {
 
     setLuckyEventVisible(false)
     if (buff) {
-      const nextBuffs = [...liveBuffs, buff].slice(-5)
+      const nextBuffs = [...liveBuffs, buff].slice(-GAME_CONFIG.luckyEvent.maxConcurrentBuffs)
       activeBuffsRef.current = nextBuffs
       setActiveBuffs(nextBuffs)
     }
-    const comboCount = buff ? Math.min(5, liveBuffs.length + 1) : liveBuffs.length
+    const comboCount = buff
+      ? Math.min(GAME_CONFIG.luckyEvent.maxConcurrentBuffs, liveBuffs.length + 1)
+      : liveBuffs.length
     const nextChainRemaining = chainStarted ? 3 : chainRemaining > 0 ? chainRemaining - 1 : 0
     setChainRemaining(nextChainRemaining)
     setLuckyCycle((cycle) => cycle + 1)

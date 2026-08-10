@@ -19,7 +19,10 @@ export const GAME_CONFIG = {
     comboAssistMinActiveBuffs: 2,
     comboAssistDelayMinMs: 3_000,
     comboAssistDelayMaxMs: 6_000,
-    comboAssistBuffChance: 0.85,
+    comboAssistBuffChance: 0.65,
+    // Two active blessings can help once, but must not create a self-feeding loop.
+    comboAssistUsesPerBuffWindow: 1,
+    maxConcurrentBuffs: 3,
   },
   anomalyDetection: {
     luckyWindowMs: 30_000,
