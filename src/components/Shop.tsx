@@ -170,6 +170,7 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
           upgradeNames={tooltipUpgrades.map((upgrade) => upgrade.name)}
           left={tooltip.left}
           top={tooltip.top}
+          onClose={() => setTooltip(null)}
         />
       )}
     </>
@@ -187,15 +188,17 @@ interface FacilityTooltipProps {
   upgradeNames: string[]
   left: number
   top: number
+  onClose: () => void
 }
 
-const FacilityTooltip = ({ item, owned, unitEffect, ownedEffect, milestoneMultiplier, nextMilestone, nextCost, upgradeNames, left, top }: FacilityTooltipProps) => (
+const FacilityTooltip = ({ item, owned, unitEffect, ownedEffect, milestoneMultiplier, nextMilestone, nextCost, upgradeNames, left, top, onClose }: FacilityTooltipProps) => (
   <aside
     id="facility-detail-tooltip"
     className="facility-tooltip"
     role="tooltip"
     style={{ left, top }}
   >
+    <button className="facility-tooltip-close" type="button" onClick={onClose} aria-label="詳細表示を閉じる">×</button>
     <header>
       <span className="facility-tooltip-icon" aria-hidden="true">{item.imagePath ? <img src={assetPath(item.imagePath)} alt="" /> : item.icon}</span>
       <div><h3>{item.name}</h3><p>所有数：{formatNumber(owned)}</p></div>
