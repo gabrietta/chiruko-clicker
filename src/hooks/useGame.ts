@@ -71,11 +71,15 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
   if (candidate.totalSatisfaction + 1 < previous.totalSatisfaction) {
     return '累計満足が過去へ戻りました。'
   }
-  if (candidate.totalLuckyRewards > candidate.totalSatisfaction + 1) {
-    return '奇跡の記録が累計満足を追い越しました。'
-  }
 
   const gain = candidate.totalSatisfaction - previous.totalSatisfaction
+  const luckyRewardGain = candidate.totalLuckyRewards - previous.totalLuckyRewards
+  // 旧バージョンでは、奇跡報酬の累計だけが別の計算方法で保存された
+  // セーブが存在します。累計値同士を直接比べると、正しい進行まで
+  // 毎回停止してしまうため、ここでは今回の更新分だけを確認します。
+  if (luckyRewardGain > gain + 1) {
+    return '今回の奇跡報酬が、同時に増えた満足を大きく超えました。'
+  }
 
   const baseProduction = getSatisfactionPerSecond(
     previous.inventory,
@@ -107,7 +111,6 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
     return '現在の満足が、ちる子の想定を大きく飛び越えました。いったん満足を止めます。'
   }
 
-  const luckyRewardGain = candidate.totalLuckyRewards - previous.totalLuckyRewards
   if (luckyRewardGain > 0) {
     if (luckyRewardGain > maxLuckyReward) {
       return '奇跡のご利益が、一度に大きすぎます。ちる子が確認するまで満足を止めます。'
@@ -623,6 +626,26 @@ export const useGame = () => {
     persist(next)
   }, [persist])
 
+  const resumeFromAnomaly = useCallback(() => {
+    if (!gameRef.current.anomalyFrozen) return false
+    const resumed = {
+      ...gameRef.current,
+      anomalyFrozen: false,
+      anomalyReason: '',
+    }
+    gameRef.current = resumed
+    setGame(resumed)
+    setLuckyEventVisible(false)
+    setActiveBuffs([])
+    activeBuffsRef.current = []
+    luckyEventTimesRef.current = []
+    lastLuckyClaimAtRef.current = 0
+    setChainRemaining(0)
+    setLuckyCycle((cycle) => cycle + 1)
+    persist(resumed)
+    return true
+  }, [persist])
+
   const exportSave = useCallback(() => encodeSaveData(gameRef.current), [])
 
   const importSave = useCallback((code: string) => {
@@ -670,6 +693,7 @@ export const useGame = () => {
     dismissOfflineReport,
     dismissLatestAchievement,
     resetGame,
+    resumeFromAnomaly,
     exportSave,
     importSave,
   }

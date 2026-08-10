@@ -48,6 +48,11 @@ export const createInitialGame = (): GameState => ({
 const finiteOr = (value: unknown, fallback: number) =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback
 
+// 旧版で使っていた累計値同士の判定による停止は、正しいセーブでも起こり得ました。
+// その理由だけで停止している既存セーブは、新しい差分判定へ移行する際に自動復旧します。
+const isLegacyLuckyAggregateAnomaly = (value: Partial<GameState>) =>
+  value.anomalyFrozen === true && value.anomalyReason === '奇跡の記録が累計満足を追い越しました。'
+
 const SAVE_CODE_PREFIX = 'CHIRUKO-SAVE-8.'
 
 // これは暗号ではなく、localStorageを直接いじったときの偶発的な破損や
@@ -116,8 +121,10 @@ export const decodeSaveData = (code: string): GameState => {
     runSatisfaction: finiteOr(parsed.runSatisfaction, 0),
     virtueMarks: Math.floor(finiteOr(parsed.virtueMarks, 0)),
     lastPlayedAt: Date.now(),
-    anomalyFrozen: parsed.anomalyFrozen === true,
-    anomalyReason: typeof parsed.anomalyReason === 'string' ? parsed.anomalyReason : '',
+    anomalyFrozen: parsed.anomalyFrozen === true && !isLegacyLuckyAggregateAnomaly(parsed),
+    anomalyReason: isLegacyLuckyAggregateAnomaly(parsed)
+      ? ''
+      : typeof parsed.anomalyReason === 'string' ? parsed.anomalyReason : '',
   }
   return imported
 }
@@ -205,6 +212,7 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
     const luckyEventTypesSeen = Array.isArray(parsed.luckyEventTypesSeen)
       ? parsed.luckyEventTypesSeen.filter((type): type is string => typeof type === 'string')
       : []
+    const legacyLuckyAggregateAnomaly = isLegacyLuckyAggregateAnomaly(parsed)
 
     return {
       game: {
@@ -238,8 +246,10 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
         unlockedAchievementIds,
         viewedMemorialIds,
         lastPlayedAt: Date.now(),
-        anomalyFrozen: parsed.anomalyFrozen === true,
-        anomalyReason: typeof parsed.anomalyReason === 'string' ? parsed.anomalyReason : '',
+        anomalyFrozen: parsed.anomalyFrozen === true && !legacyLuckyAggregateAnomaly,
+        anomalyReason: legacyLuckyAggregateAnomaly
+          ? ''
+          : typeof parsed.anomalyReason === 'string' ? parsed.anomalyReason : '',
       },
       offlineReport: rawElapsed >= 10 && earned >= 1
         ? {

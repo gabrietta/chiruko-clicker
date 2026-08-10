@@ -6,6 +6,9 @@ interface SettingsModalProps {
   onUpdateAudio: (patch: Partial<AudioPreferences>) => void
   onClose: () => void
   onReset: () => void
+  anomalyFrozen: boolean
+  anomalyReason: string
+  onResumeAnomaly: () => boolean
   onExportSave: () => string
   onImportSave: (code: string) => boolean
 }
@@ -18,7 +21,7 @@ const Toggle = ({ label, note, checked, disabled, onChange }: { label: string; n
   </label>
 )
 
-export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onReset, onExportSave, onImportSave }: SettingsModalProps) => {
+export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onReset, anomalyFrozen, anomalyReason, onResumeAnomaly, onExportSave, onImportSave }: SettingsModalProps) => {
   const [saveCode, setSaveCode] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
   const confirmReset = () => {
@@ -46,6 +49,11 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
     setSaveMessage(onImportSave(saveCode) ? 'セーブデータを読み込みました。' : 'セーブコードが正しくありません。')
   }
 
+  const handleResumeAnomaly = () => {
+    if (!window.confirm('安全確認を解除して、現在のセーブデータを保持したまま再開します。異常な増加が続く場合は、再び停止します。続けますか？')) return
+    onResumeAnomaly()
+  }
+
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="modal-card settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
@@ -68,6 +76,11 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
           <div className="save-transfer-actions"><button className="secondary-button" type="button" onClick={handleExport}>セーブを書き出す</button><button className="secondary-button" type="button" onClick={handleImport}>セーブを読み込む</button></div>
           {saveMessage && <small className="save-transfer-message" role="status">{saveMessage}</small>}
         </div>
+        {anomalyFrozen && <div className="settings-section anomaly-recovery-section">
+          <strong>安全確認による一時停止</strong>
+          <span>{anomalyReason || '満足の流れに不自然な揺らぎを感じました。'} 現在の進行状況は保持されています。</span>
+          <button className="secondary-button" type="button" onClick={handleResumeAnomaly}>安全確認を解除して再開</button>
+        </div>}
         <div className="settings-actions"><button className="danger-button" type="button" onClick={confirmReset}>全データをリセット</button><button className="secondary-button" type="button" onClick={onClose} autoFocus>ゲームに戻る</button></div>
       </section>
     </div>
