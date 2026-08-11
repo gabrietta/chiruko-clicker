@@ -50,7 +50,11 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
   }
 
   const handleResumeAnomaly = () => {
-    if (!window.confirm('安全確認を解除して再開します。誤検知への配慮として、現在使える満足の5%を安全確認料として預かります。累計満足・設備・実績・救済印は保持されます。続けますか？')) return
+    const isRetiredLuckyAggregateCheck = anomalyReason.includes('今回の奇跡報酬')
+    const message = isRetiredLuckyAggregateCheck
+      ? '今回の警告は旧判定による誤検知の可能性があります。満足を減らさず、履歴だけを整えて再開します。累計満足・設備・実績・救済印は保持されます。続けますか？'
+      : '安全確認を解除して再開します。誤検知への配慮として、現在使える満足の5%を安全確認料として預かります。累計満足・設備・実績・救済印は保持されます。続けますか？'
+    if (!window.confirm(message)) return
     onResumeAnomaly()
   }
 

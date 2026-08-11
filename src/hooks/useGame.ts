@@ -74,12 +74,11 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
 
   const gain = candidate.totalSatisfaction - previous.totalSatisfaction
   const luckyRewardGain = candidate.totalLuckyRewards - previous.totalLuckyRewards
-  // 旧バージョンでは、奇跡報酬の累計だけが別の計算方法で保存された
-  // セーブが存在します。累計値同士を直接比べると、正しい進行まで
-  // 毎回停止してしまうため、ここでは今回の更新分だけを確認します。
-  if (luckyRewardGain > gain + 1) {
-    return '今回の奇跡報酬が、同時に増えた満足を大きく超えました。'
-  }
+  // 旧バージョンでは、奇跡報酬の累計だけ別の計算方法で保存された
+  // セーブがありました。この値を今回の増加量と比較すると、再布教後の
+  // 大きな救済印・連鎖報酬を正しく遊んでいる人まで誤検知します。
+  // 報酬そのものは下の maxLuckyReward で上限を確認するため、ここでは
+  // 冗長な差分判定を行わないようにします。
 
   const baseProduction = getSatisfactionPerSecond(
     previous.inventory,
@@ -637,7 +636,13 @@ export const useGame = () => {
   const resumeFromAnomaly = useCallback(() => {
     if (!gameRef.current.anomalyFrozen) return false
     const current = gameRef.current
-    const penaltyRate = GAME_CONFIG.anomalyDetection.resumePenaltyRate
+    // This message was produced by the retired aggregate-difference check.
+    // It is a known false-positive path, so repair the history without taking
+    // a satisfaction penalty from legitimate players.
+    const isRetiredLuckyAggregateCheck = current.anomalyReason.includes('今回の奇跡報酬')
+    const penaltyRate = isRetiredLuckyAggregateCheck
+      ? 0
+      : GAME_CONFIG.anomalyDetection.resumePenaltyRate
     const satisfactionPenalty = current.satisfaction * penaltyRate
     // Repair the historical relationship before resuming. A damaged save can
     // otherwise trigger the same lucky-reward check again on the next claim.
