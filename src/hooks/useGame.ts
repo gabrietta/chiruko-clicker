@@ -186,25 +186,11 @@ export const useGame = () => {
     window.setTimeout(() => setSaveLabel('自動保存オン'), 1100)
   }, [])
 
-  const freezeForAnomaly = useCallback((reason: string) => {
-    const current = gameRef.current
-    if (current.anomalyFrozen) return current
-    const frozen = { ...current, anomalyFrozen: true, anomalyReason: reason }
-    gameRef.current = frozen
-    setGame(frozen)
-    setLuckyEventVisible(false)
-    setActiveBuffs([])
-    activeBuffsRef.current = []
-    setChainRemaining(0)
-    setLuckyCycle((cycle) => cycle + 1)
-    persist(frozen)
-    return frozen
-  }, [persist])
-
   const commit = useCallback((candidate: GameState, persistNow = false) => {
-    if (gameRef.current.anomalyFrozen) return gameRef.current
     const anomalyReason = getAnomalyReason(gameRef.current, candidate, activeBuffsRef.current)
-    if (anomalyReason) return freezeForAnomaly(anomalyReason)
+    // Protect the save by rejecting only the suspicious update. A local-only
+    // game should never lock an entire player out because of a false positive.
+    if (anomalyReason) return gameRef.current
     const result = unlockEarnedAchievements(candidate)
     const next = result.game
     gameRef.current = next
@@ -215,7 +201,7 @@ export const useGame = () => {
     }
     if (persistNow) persist(next)
     return next
-  }, [freezeForAnomaly, persist])
+  }, [persist])
 
   useEffect(() => {
     if (game.clickCombo <= 0) return
@@ -231,7 +217,6 @@ export const useGame = () => {
     persist(gameRef.current, false)
 
     const productionTimer = window.setInterval(() => {
-      if (gameRef.current.anomalyFrozen) return
       const now = performance.now()
       const elapsed = Math.min((now - lastTickRef.current) / 1000, 10)
       lastTickRef.current = now
@@ -314,7 +299,6 @@ export const useGame = () => {
   }, [activeBuffs, chainRemaining, game.purchasedDoctrineIds, luckyCycle])
 
   const clickCharacter = useCallback(() => {
-    if (gameRef.current.anomalyFrozen) return 0
     const now = Date.now()
     const previous = gameRef.current
     const nextCombo = now - previous.clickComboLastAt <= 2_200
@@ -340,7 +324,6 @@ export const useGame = () => {
   }, [commit])
 
   const purchaseItem = useCallback((itemId: string, quantity = 1) => {
-    if (gameRef.current.anomalyFrozen) return false
     const item = SHOP_ITEMS.find((candidate) => candidate.id === itemId)
     if (!item) return false
 
@@ -362,7 +345,6 @@ export const useGame = () => {
   }, [commit])
 
   const purchaseUpgrade = useCallback((upgradeId: string) => {
-    if (gameRef.current.anomalyFrozen) return false
     const upgrade = UPGRADES.find((candidate) => candidate.id === upgradeId)
     if (!upgrade || gameRef.current.purchasedUpgradeIds.includes(upgradeId)) return false
     if (!isUpgradeUnlocked(gameRef.current, upgradeId) || gameRef.current.satisfaction < upgrade.cost) return false
@@ -376,7 +358,7 @@ export const useGame = () => {
   }, [commit])
 
   const claimLuckyEvent = useCallback((): LuckyEventResult => {
-    if (!luckyEventVisible || gameRef.current.anomalyFrozen) {
+    if (!luckyEventVisible) {
       return { amount: 0, message: '', buff: null, chainStarted: false, chainCompleted: false, eventType: '' }
     }
     const now = Date.now()
@@ -523,7 +505,7 @@ export const useGame = () => {
     const nextChainRemaining = chainStarted ? 3 : chainRemaining > 0 ? chainRemaining - 1 : 0
     setChainRemaining(nextChainRemaining)
     setLuckyCycle((cycle) => cycle + 1)
-    const next = commit({
+    const luckyCandidate = {
       ...gameRef.current,
       satisfaction: gameRef.current.satisfaction + reward,
       totalSatisfaction: gameRef.current.totalSatisfaction + reward,
@@ -535,15 +517,15 @@ export const useGame = () => {
         : [...gameRef.current.luckyEventTypesSeen, eventType],
       maxBuffCombo: Math.max(gameRef.current.maxBuffCombo, comboCount),
       luckyChainsCompleted: gameRef.current.luckyChainsCompleted + (chainCompleted ? 1 : 0),
-    }, true)
-    if (next.anomalyFrozen) {
+    }
+    const next = commit(luckyCandidate, true)
+    if (next.totalLuckyRewards < luckyCandidate.totalLuckyRewards) {
       return { amount: 0, message: '', buff: null, chainStarted: false, chainCompleted: false, eventType: '' }
     }
     return { amount: reward, message, buff, chainStarted, chainCompleted, eventType }
   }, [chainRemaining, commit, luckyEventVisible])
 
   const purchaseDoctrine = useCallback((doctrineId: string) => {
-    if (gameRef.current.anomalyFrozen) return false
     const doctrine = DOCTRINES.find((candidate) => candidate.id === doctrineId)
     if (!doctrine || gameRef.current.purchasedDoctrineIds.includes(doctrineId)) return false
     if (!areDoctrineRequirementsMet(gameRef.current.purchasedDoctrineIds, doctrine)) return false
@@ -583,7 +565,6 @@ export const useGame = () => {
   }, [commit])
 
   const prestige = useCallback(() => {
-    if (gameRef.current.anomalyFrozen) return 0
     const gain = getPrestigeGain(gameRef.current.runSatisfaction)
     if (gain <= 0) return 0
     const fresh = createInitialGame()

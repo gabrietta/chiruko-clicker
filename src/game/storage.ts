@@ -48,19 +48,6 @@ export const createInitialGame = (): GameState => ({
 const finiteOr = (value: unknown, fallback: number) =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback
 
-// 旧版で使っていた奇跡報酬の累計・差分判定による停止は、正しいセーブでも
-// 起こり得ました。その理由だけで停止している既存セーブは、読み込み時に
-// 自動復旧します。新しい報酬上限・発動間隔の判定はここには含めません。
-const RETIRED_LUCKY_ANOMALY_REASONS = new Set([
-  '奇跡の記録が累計満足を追い越しました。',
-  '今回の奇跡報酬が、同時に増えた満足を大きく超えました。',
-])
-
-const isLegacyLuckyAggregateAnomaly = (value: Partial<GameState>) =>
-  value.anomalyFrozen === true &&
-  typeof value.anomalyReason === 'string' &&
-  RETIRED_LUCKY_ANOMALY_REASONS.has(value.anomalyReason)
-
 const SAVE_CODE_PREFIX = 'CHIRUKO-SAVE-8.'
 
 // これは暗号ではなく、localStorageを直接いじったときの偶発的な破損や
@@ -129,10 +116,10 @@ export const decodeSaveData = (code: string): GameState => {
     runSatisfaction: finiteOr(parsed.runSatisfaction, 0),
     virtueMarks: Math.floor(finiteOr(parsed.virtueMarks, 0)),
     lastPlayedAt: Date.now(),
-    anomalyFrozen: parsed.anomalyFrozen === true && !isLegacyLuckyAggregateAnomaly(parsed),
-    anomalyReason: isLegacyLuckyAggregateAnomaly(parsed)
-      ? ''
-      : typeof parsed.anomalyReason === 'string' ? parsed.anomalyReason : '',
+    // Hard safety locks were retired because normal mobile play could trigger
+    // them. Imported saves always resume without losing progression.
+    anomalyFrozen: false,
+    anomalyReason: '',
   }
   return imported
 }
@@ -220,8 +207,6 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
     const luckyEventTypesSeen = Array.isArray(parsed.luckyEventTypesSeen)
       ? parsed.luckyEventTypesSeen.filter((type): type is string => typeof type === 'string')
       : []
-    const legacyLuckyAggregateAnomaly = isLegacyLuckyAggregateAnomaly(parsed)
-
     return {
       game: {
         version: GAME_CONFIG.saveVersion,
@@ -254,10 +239,9 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
         unlockedAchievementIds,
         viewedMemorialIds,
         lastPlayedAt: Date.now(),
-        anomalyFrozen: parsed.anomalyFrozen === true && !legacyLuckyAggregateAnomaly,
-        anomalyReason: legacyLuckyAggregateAnomaly
-          ? ''
-          : typeof parsed.anomalyReason === 'string' ? parsed.anomalyReason : '',
+        // Existing stopped saves are automatically resumed on every load.
+        anomalyFrozen: false,
+        anomalyReason: '',
       },
       offlineReport: rawElapsed >= 10 && earned >= 1
         ? {
