@@ -3386,10 +3386,11 @@
     padding-top: 52px;
     max-height: min(62vh, 390px);
     overflow-y: auto;
-    pointer-events: auto;
+    /* The detail card may overlap lower shop rows; let taps reach buttons behind it. */
+    pointer-events: none;
   }
   .facility-tooltip::after { display: none; }
-  .facility-tooltip-close { display: grid; place-items: center; }
+  .facility-tooltip-close { display: grid; place-items: center; pointer-events: auto; }
 }
 
 @media (max-width: 620px) {

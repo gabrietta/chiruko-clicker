@@ -131,7 +131,7 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
                       <div className="item-production-line"><span className="item-effect">{effectLabel}</span>{item.effectType === 'perSecond' && owned > 0 && <span className="item-total-output">計 +{formatNumber(item.effectValue * itemMultiplier * milestoneMultiplier * owned * achievementMultiplier * productionMultiplier)}/秒</span>}</div>
                       <span className={`milestone-progress ${nextMilestone ? '' : 'complete'}`}>{nextMilestone ? `あと${nextMilestone - owned}個で生産×${FACILITY_MILESTONE_MULTIPLIER}` : '節目ボーナス最大'}</span>
                     </div>
-                    <button type="button" className="buy-button" disabled={!canBuy} onClick={() => onPurchase(item.id, quantity)} aria-label={`${item.name}を${quantity}個、${formatNumber(cost)}満足で購入`}>
+                    <button type="button" className="buy-button" disabled={!canBuy} onClick={() => { setTooltip(null); onPurchase(item.id, quantity) }} aria-label={`${item.name}を${quantity}個、${formatNumber(cost)}満足で購入`}>
                       <span>{canBuy ? `${quantity}個お迎え` : '不足'}</span><strong>{formatNumber(cost)}</strong>
                     </button>
                   </article>
