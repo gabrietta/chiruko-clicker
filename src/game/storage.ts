@@ -48,10 +48,18 @@ export const createInitialGame = (): GameState => ({
 const finiteOr = (value: unknown, fallback: number) =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback
 
-// 旧版で使っていた累計値同士の判定による停止は、正しいセーブでも起こり得ました。
-// その理由だけで停止している既存セーブは、新しい差分判定へ移行する際に自動復旧します。
+// 旧版で使っていた奇跡報酬の累計・差分判定による停止は、正しいセーブでも
+// 起こり得ました。その理由だけで停止している既存セーブは、読み込み時に
+// 自動復旧します。新しい報酬上限・発動間隔の判定はここには含めません。
+const RETIRED_LUCKY_ANOMALY_REASONS = new Set([
+  '奇跡の記録が累計満足を追い越しました。',
+  '今回の奇跡報酬が、同時に増えた満足を大きく超えました。',
+])
+
 const isLegacyLuckyAggregateAnomaly = (value: Partial<GameState>) =>
-  value.anomalyFrozen === true && value.anomalyReason === '奇跡の記録が累計満足を追い越しました。'
+  value.anomalyFrozen === true &&
+  typeof value.anomalyReason === 'string' &&
+  RETIRED_LUCKY_ANOMALY_REASONS.has(value.anomalyReason)
 
 const SAVE_CODE_PREFIX = 'CHIRUKO-SAVE-8.'
 

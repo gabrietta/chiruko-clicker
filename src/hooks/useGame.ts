@@ -385,14 +385,26 @@ export const useGame = () => {
       lastClaimAt > 0 &&
       (now < lastClaimAt || now - lastClaimAt < GAME_CONFIG.anomalyDetection.minLuckyClaimIntervalMs)
     ) {
-      freezeForAnomaly('奇跡の発動間隔が短すぎます。ちる子が不正な連打を検知しました。')
+      // Mobile browsers can dispatch a second click from a perfectly normal
+      // double tap. Ignore the duplicate instead of freezing the whole save.
       return { amount: 0, message: '', buff: null, chainStarted: false, chainCompleted: false, eventType: '' }
     }
     const windowStart = now - GAME_CONFIG.anomalyDetection.luckyWindowMs
     luckyEventTimesRef.current = luckyEventTimesRef.current.filter((timestamp) => timestamp >= windowStart)
     if (luckyEventTimesRef.current.length >= GAME_CONFIG.anomalyDetection.maxLuckyEventsPerWindow) {
-      freezeForAnomaly('奇跡が短時間に連続しすぎました。ちる子が安全確認のため満足を一時停止します。')
-      return { amount: 0, message: '', buff: null, chainStarted: false, chainCompleted: false, eventType: '' }
+      // Legitimate chains and assisted miracles can bunch together. Rate-limit
+      // only the event itself; never stop ordinary production for this case.
+      setLuckyEventVisible(false)
+      setChainRemaining(0)
+      setLuckyCycle((cycle) => cycle + 1)
+      return {
+        amount: 0,
+        message: '救済の欠片は少し休憩中です。しばらくお待ちください。',
+        buff: null,
+        chainStarted: false,
+        chainCompleted: false,
+        eventType: 'cooldown',
+      }
     }
     lastLuckyClaimAtRef.current = now
     luckyEventTimesRef.current.push(now)
@@ -528,7 +540,7 @@ export const useGame = () => {
       return { amount: 0, message: '', buff: null, chainStarted: false, chainCompleted: false, eventType: '' }
     }
     return { amount: reward, message, buff, chainStarted, chainCompleted, eventType }
-  }, [chainRemaining, commit, freezeForAnomaly, luckyEventVisible])
+  }, [chainRemaining, commit, luckyEventVisible])
 
   const purchaseDoctrine = useCallback((doctrineId: string) => {
     if (gameRef.current.anomalyFrozen) return false
@@ -636,13 +648,7 @@ export const useGame = () => {
   const resumeFromAnomaly = useCallback(() => {
     if (!gameRef.current.anomalyFrozen) return false
     const current = gameRef.current
-    // This message was produced by the retired aggregate-difference check.
-    // It is a known false-positive path, so repair the history without taking
-    // a satisfaction penalty from legitimate players.
-    const isRetiredLuckyAggregateCheck = current.anomalyReason.includes('今回の奇跡報酬')
-    const penaltyRate = isRetiredLuckyAggregateCheck
-      ? 0
-      : GAME_CONFIG.anomalyDetection.resumePenaltyRate
+    const penaltyRate = GAME_CONFIG.anomalyDetection.resumePenaltyRate
     const satisfactionPenalty = current.satisfaction * penaltyRate
     // Repair the historical relationship before resuming. A damaged save can
     // otherwise trigger the same lucky-reward check again on the next claim.

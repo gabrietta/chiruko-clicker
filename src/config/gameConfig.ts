@@ -35,9 +35,9 @@ export const GAME_CONFIG = {
     // leaves room for rounding and seasonal bonuses.
     maxLuckyRewardMultiplier: 6,
     maxGainRateMultiplier: 420,
-    // Resuming after a safety stop costs only spendable satisfaction;
-    // lifetime totals, facilities, achievements and virtue marks are preserved.
-    resumePenaltyRate: 0.05,
+    // Safety stops protect a local save from runaway values. They are not a
+    // punishment: resuming preserves all satisfaction and progression.
+    resumePenaltyRate: 0,
   },
   characterImages: {
     main: '/assets/characters/chiruko-sit.png',

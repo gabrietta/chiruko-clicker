@@ -50,11 +50,7 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
   }
 
   const handleResumeAnomaly = () => {
-    const isRetiredLuckyAggregateCheck = anomalyReason.includes('今回の奇跡報酬')
-    const message = isRetiredLuckyAggregateCheck
-      ? '今回の警告は旧判定による誤検知の可能性があります。満足を減らさず、履歴だけを整えて再開します。累計満足・設備・実績・救済印は保持されます。続けますか？'
-      : '安全確認を解除して再開します。誤検知への配慮として、現在使える満足の5%を安全確認料として預かります。累計満足・設備・実績・救済印は保持されます。続けますか？'
-    if (!window.confirm(message)) return
+    if (!window.confirm('安全確認を解除して再開します。これはBANではなく、満足・累計満足・設備・実績・救済印は減りません。続けますか？')) return
     onResumeAnomaly()
   }
 
@@ -63,6 +59,11 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
       <section className="modal-card settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
         <p className="modal-eyebrow">SETTINGS</p><h2 id="settings-title">設定</h2>
         <p>進行状況はこのブラウザへ自動保存されます。音の設定はゲーム進行とは別に保存されます。</p>
+        {anomalyFrozen && <div className="settings-section anomaly-recovery-section">
+          <strong>安全確認による一時停止（BANではありません）</strong>
+          <span>{anomalyReason || '満足の流れに不自然な揺らぎを感じました。'} セーブデータは保持されています。満足を減らさず再開できます。</span>
+          <button className="secondary-button" type="button" onClick={handleResumeAnomaly}>安全確認を解除して再開</button>
+        </div>}
         <div className="settings-section audio-settings">
           <div className="settings-section-title"><strong>音声・サウンド</strong><span>最初はBGMとボイスのみオフです</span></div>
           <Toggle label="すべての音" note="一括ミュート" checked={audioPreferences.masterEnabled} onChange={(masterEnabled) => onUpdateAudio({ masterEnabled })} />
@@ -80,11 +81,6 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
           <div className="save-transfer-actions"><button className="secondary-button" type="button" onClick={handleExport}>セーブを書き出す</button><button className="secondary-button" type="button" onClick={handleImport}>セーブを読み込む</button></div>
           {saveMessage && <small className="save-transfer-message" role="status">{saveMessage}</small>}
         </div>
-        {anomalyFrozen && <div className="settings-section anomaly-recovery-section">
-          <strong>安全確認による一時停止</strong>
-          <span>{anomalyReason || '満足の流れに不自然な揺らぎを感じました。'} 現在の進行状況は保持されています。</span>
-          <button className="secondary-button" type="button" onClick={handleResumeAnomaly}>安全確認を解除して再開</button>
-        </div>}
         <div className="settings-actions"><button className="danger-button" type="button" onClick={confirmReset}>全データをリセット</button><button className="secondary-button" type="button" onClick={onClose} autoFocus>ゲームに戻る</button></div>
       </section>
     </div>

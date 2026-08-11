@@ -145,10 +145,11 @@ function App() {
         <aside className="anomaly-warning" role="alert">
           <span className="anomaly-warning-mark" aria-hidden="true">!</span>
           <div>
-            <strong>ちる子からの安全確認です</strong>
+            <strong>ちる子からの安全確認です（BANではありません）</strong>
             <p>{game.anomalyReason || '満足の流れに不自然な揺らぎを感じました。'}</p>
-            <small>満足の増加を一時停止しています。問題がなければ設定から安全確認を解除して再開できます。</small>
+            <small>セーブデータは消えていません。設定から、満足を減らさずすぐに再開できます。</small>
           </div>
+          <button className="anomaly-warning-action" type="button" onClick={() => setSettingsOpen(true)}>設定を開いて再開</button>
         </aside>
       )}
 
@@ -168,7 +169,7 @@ function App() {
       }} onOpenMemorial={(id) => { setAchievementsOpen(false); setActiveMemorialId(id) }} />}
       {statsOpen && <StatsModal game={game} clickPower={clickPower} perSecond={satisfactionPerSecond} onClose={() => setStatsOpen(false)} />}
       {prestigeOpen && <PrestigeModal game={game} onClose={() => setPrestigeOpen(false)} onPrestige={handlePrestige} onPurchaseDoctrine={handleDoctrine} />}
-      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const isRetiredLuckyAggregateCheck = game.anomalyReason.includes('今回の奇跡報酬'); const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast(isRetiredLuckyAggregateCheck ? '旧判定の履歴を整えて、満足を減らさず再開しました' : '履歴を整えて安全確認を解除しました。現在の満足の5%を預かり、再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} />}
+      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整え、安全確認を解除して再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} />}
       {activeMemorialId && (() => {
         const memorial = MEMORIALS.find((candidate) => candidate.id === activeMemorialId)
         if (!memorial) return null
