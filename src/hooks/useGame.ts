@@ -636,8 +636,24 @@ export const useGame = () => {
 
   const resumeFromAnomaly = useCallback(() => {
     if (!gameRef.current.anomalyFrozen) return false
+    const current = gameRef.current
+    const penaltyRate = GAME_CONFIG.anomalyDetection.resumePenaltyRate
+    const satisfactionPenalty = current.satisfaction * penaltyRate
+    // Repair the historical relationship before resuming. A damaged save can
+    // otherwise trigger the same lucky-reward check again on the next claim.
+    const repairedTotalSatisfaction = Math.max(
+      current.totalSatisfaction,
+      current.satisfaction,
+      current.runSatisfaction,
+    )
+    const repairedRunSatisfaction = Math.min(current.runSatisfaction, repairedTotalSatisfaction)
+    const repairedLuckyRewards = Math.min(current.totalLuckyRewards, repairedTotalSatisfaction)
     const resumed = {
-      ...gameRef.current,
+      ...current,
+      satisfaction: Math.max(0, current.satisfaction - satisfactionPenalty),
+      totalSatisfaction: repairedTotalSatisfaction,
+      runSatisfaction: Math.max(0, repairedRunSatisfaction - satisfactionPenalty),
+      totalLuckyRewards: repairedLuckyRewards,
       anomalyFrozen: false,
       anomalyReason: '',
     }

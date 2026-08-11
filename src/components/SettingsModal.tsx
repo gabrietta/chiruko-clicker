@@ -50,7 +50,7 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
   }
 
   const handleResumeAnomaly = () => {
-    if (!window.confirm('安全確認を解除して、現在のセーブデータを保持したまま再開します。異常な増加が続く場合は、再び停止します。続けますか？')) return
+    if (!window.confirm('安全確認を解除して再開します。誤検知への配慮として、現在使える満足の5%を安全確認料として預かります。累計満足・設備・実績・救済印は保持されます。続けますか？')) return
     onResumeAnomaly()
   }
 

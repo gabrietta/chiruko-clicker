@@ -168,7 +168,7 @@ function App() {
       }} onOpenMemorial={(id) => { setAchievementsOpen(false); setActiveMemorialId(id) }} />}
       {statsOpen && <StatsModal game={game} clickPower={clickPower} perSecond={satisfactionPerSecond} onClose={() => setStatsOpen(false)} />}
       {prestigeOpen && <PrestigeModal game={game} onClose={() => setPrestigeOpen(false)} onPrestige={handlePrestige} onPurchaseDoctrine={handleDoctrine} />}
-      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('安全確認を解除し、満足を再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} />}
+      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整えて安全確認を解除しました。現在の満足の5%を預かり、再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} />}
       {activeMemorialId && (() => {
         const memorial = MEMORIALS.find((candidate) => candidate.id === activeMemorialId)
         if (!memorial) return null
