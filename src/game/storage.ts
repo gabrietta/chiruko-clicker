@@ -4,8 +4,10 @@ import { UPGRADES } from '../config/upgrades'
 import { ALL_COSMETICS } from '../config/cosmetics'
 import { DOCTRINES, getDoctrineEffect } from '../config/doctrines'
 import { MEMORIALS } from '../config/memorials'
+import { getDailyOmen, getDailyOmenDateKey } from '../config/omens'
+import { isWorshipPolicy } from '../config/worshipPolicies'
 import type { GameState, OfflineReport } from '../types/game'
-import { getSatisfactionPerSecond } from './calculations'
+import { getSatisfactionPerSecond, getSleepyBankCap } from './calculations'
 
 const createInventory = () =>
   Object.fromEntries(SHOP_ITEMS.map((item) => [item.id, 0]))
@@ -37,6 +39,17 @@ export const createInitialGame = (): GameState => ({
   longestOfflineSeconds: 0,
   playSeconds: 0,
   highestPerSecond: 0,
+  dailyOmenDate: getDailyOmenDateKey(),
+  dailyOmenId: getDailyOmen().id,
+  dailyOmenStartValue: 0,
+  dailyOmenCompleted: false,
+  dailyOmenCompletions: 0,
+  worshipPolicy: 'balanced',
+  worshipPolicyChanges: 0,
+  sleepyChirukos: 0,
+  sleepyBank: 0,
+  sleepyTotalWoken: 0,
+  maxSleepyChirukos: 0,
   startedAt: Date.now(),
   unlockedAchievementIds: [],
   viewedMemorialIds: [],
@@ -115,6 +128,17 @@ export const decodeSaveData = (code: string): GameState => {
     totalSatisfaction: finiteOr(parsed.totalSatisfaction, 0),
     runSatisfaction: finiteOr(parsed.runSatisfaction, 0),
     virtueMarks: Math.floor(finiteOr(parsed.virtueMarks, 0)),
+    dailyOmenDate: typeof parsed.dailyOmenDate === 'string' ? parsed.dailyOmenDate : fresh.dailyOmenDate,
+    dailyOmenId: typeof parsed.dailyOmenId === 'string' ? parsed.dailyOmenId : fresh.dailyOmenId,
+    dailyOmenStartValue: finiteOr(parsed.dailyOmenStartValue, 0),
+    dailyOmenCompleted: parsed.dailyOmenCompleted === true,
+    dailyOmenCompletions: Math.floor(finiteOr(parsed.dailyOmenCompletions, 0)),
+    worshipPolicy: isWorshipPolicy(parsed.worshipPolicy) ? parsed.worshipPolicy : 'balanced',
+    worshipPolicyChanges: Math.floor(finiteOr(parsed.worshipPolicyChanges, 0)),
+    sleepyChirukos: Math.min(3, Math.floor(finiteOr(parsed.sleepyChirukos, 0))),
+    sleepyBank: finiteOr(parsed.sleepyBank, 0),
+    sleepyTotalWoken: Math.floor(finiteOr(parsed.sleepyTotalWoken, 0)),
+    maxSleepyChirukos: Math.floor(finiteOr(parsed.maxSleepyChirukos, 0)),
     lastPlayedAt: Date.now(),
     // Hard safety locks were retired because normal mobile play could trigger
     // them. Imported saves always resume without losing progression.
@@ -185,16 +209,24 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
     const previousTime = finiteOr(parsed.lastPlayedAt, Date.now())
     const rawElapsed = Math.max(0, (Date.now() - previousTime) / 1000)
     const virtueMarks = Math.floor(finiteOr(parsed.virtueMarks, 0))
+    const worshipPolicy = isWorshipPolicy(parsed.worshipPolicy) ? parsed.worshipPolicy : 'balanced'
     const perSecond = getSatisfactionPerSecond(
       inventory,
       unlockedAchievementIds.length,
       purchasedUpgradeIds,
       virtueMarks,
       purchasedDoctrineIds,
+      worshipPolicy,
     )
     const offlineCapMultiplier = getDoctrineEffect(purchasedDoctrineIds, 'offlineCapMultiplier')
     const adjustedElapsedSeconds = Math.min(rawElapsed, GAME_CONFIG.maxOfflineSeconds * offlineCapMultiplier)
     const earned = perSecond * adjustedElapsedSeconds
+    const savedSleepyBank = finiteOr(parsed.sleepyBank, 0)
+    const sleepyChirukos = Math.min(3, Math.floor(finiteOr(parsed.sleepyChirukos, 0)))
+    const sleepyBank = Math.min(
+      getSleepyBankCap(perSecond, savedSleepyBank),
+      savedSleepyBank + perSecond * adjustedElapsedSeconds * sleepyChirukos * GAME_CONFIG.sleepyChiruko.sharePerChiruko,
+    )
     const offlineSession = rawElapsed >= 60
     const satisfaction = finiteOr(parsed.satisfaction, 0) + earned
     const totalSatisfaction = finiteOr(parsed.totalSatisfaction, 0) + earned
@@ -235,6 +267,17 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
         longestOfflineSeconds,
         playSeconds: finiteOr(parsed.playSeconds, 0),
         highestPerSecond: Math.max(finiteOr(parsed.highestPerSecond, 0), perSecond),
+        dailyOmenDate: typeof parsed.dailyOmenDate === 'string' ? parsed.dailyOmenDate : fresh.dailyOmenDate,
+        dailyOmenId: typeof parsed.dailyOmenId === 'string' ? parsed.dailyOmenId : fresh.dailyOmenId,
+        dailyOmenStartValue: finiteOr(parsed.dailyOmenStartValue, 0),
+        dailyOmenCompleted: parsed.dailyOmenCompleted === true,
+        dailyOmenCompletions: Math.floor(finiteOr(parsed.dailyOmenCompletions, 0)),
+        worshipPolicy,
+        worshipPolicyChanges: Math.floor(finiteOr(parsed.worshipPolicyChanges, 0)),
+        sleepyChirukos,
+        sleepyBank,
+        sleepyTotalWoken: Math.floor(finiteOr(parsed.sleepyTotalWoken, 0)),
+        maxSleepyChirukos: Math.max(sleepyChirukos, Math.floor(finiteOr(parsed.maxSleepyChirukos, 0))),
         startedAt: finiteOr(parsed.startedAt, Date.now()),
         unlockedAchievementIds,
         viewedMemorialIds,

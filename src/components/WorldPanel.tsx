@@ -4,6 +4,8 @@ import { getFacilityMilestoneMultiplier, getItemProductionMultiplier, getPrestig
 import type { GameState } from '../types/game'
 import { formatNumber } from '../utils/format'
 import { assetPath } from '../utils/assetPath'
+import { SideSystemsPanel } from './SideSystemsPanel'
+import type { WorshipPolicy } from '../types/game'
 
 interface WorldPanelProps {
   game: GameState
@@ -13,6 +15,10 @@ interface WorldPanelProps {
   season: SeasonDefinition
   onOpenStats: () => void
   onOpenPrestige: () => void
+  onClaimOmen: () => void
+  onSetWorshipPolicy: (policy: WorshipPolicy) => void
+  onSendSleepyChiruko: () => void
+  onWakeSleepyChiruko: () => void
 }
 
 const LANE_GROUPS = [
@@ -33,7 +39,7 @@ const getDisplayedFacilityCount = (owned: number) => (
   DISPLAY_COUNT_THRESHOLDS.filter((threshold) => owned >= threshold).length
 )
 
-export const WorldPanel = ({ game, perSecond, achievementMultiplier, productionMultiplier, season, onOpenStats, onOpenPrestige }: WorldPanelProps) => {
+export const WorldPanel = ({ game, perSecond, achievementMultiplier, productionMultiplier, season, onOpenStats, onOpenPrestige, onClaimOmen, onSetWorshipPolicy, onSendSleepyChiruko, onWakeSleepyChiruko }: WorldPanelProps) => {
   const prestigeGain = getPrestigeGain(game.runSatisfaction)
   const progress = Math.min(100, (game.runSatisfaction / GAME_CONFIG.prestigeBaseRequirement) * 100)
 
@@ -55,6 +61,8 @@ export const WorldPanel = ({ game, perSecond, achievementMultiplier, productionM
         <div><small>{season.subtitle}</small><strong>{season.name}</strong><p>{season.description}</p></div>
         <i aria-hidden="true">開催中</i>
       </article>
+
+      <SideSystemsPanel game={game} perSecond={perSecond} onClaimOmen={onClaimOmen} onSetWorshipPolicy={onSetWorshipPolicy} onSendSleepyChiruko={onSendSleepyChiruko} onWakeSleepyChiruko={onWakeSleepyChiruko} />
 
       <div className="world-lanes">
         {LANE_GROUPS.map((lane, laneIndex) => {

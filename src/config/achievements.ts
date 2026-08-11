@@ -108,6 +108,14 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   { id: 'offline-7', name: '帰る場所は満足', description: '留守番報酬を7回受け取る', flavor: 'おかえりなさい。今日も静かに増えていました。', icon: '帰', metric: 'offlineSessions', target: 7, hidden: true },
   { id: 'offline-overnight', name: '一晩分の満足', description: '1時間以上の留守番報酬を受け取る', flavor: '眠っているあいだも、教祖は働いていました。', icon: '夜', metric: 'longestOffline', target: 3_600, hidden: true },
 
+  { id: 'omen-1', name: '本日の御告げ', description: '教祖のお告げを1つ達成する', flavor: '今日の小さな目標、たいへん立派でした。', icon: '告', metric: 'omenCompletions', target: 1 },
+  { id: 'omen-7', name: '一週間の祈り', description: '教祖のお告げを累計7個達成する', flavor: '毎日の小さな満足が、計画を育てます。', icon: '週', metric: 'omenCompletions', target: 7, hidden: true },
+  { id: 'omen-30', name: '月刊・満足通信', description: '教祖のお告げを累計30個達成する', flavor: 'お告げの記録が、そろそろ冊子になりそうです。', icon: '月', metric: 'omenCompletions', target: 30, hidden: true },
+  { id: 'policy-3', name: '三つの礼拝', description: '礼拝方針を累計3回変更する', flavor: '迷いながら選ぶことも、信仰の一部です。', icon: '三', metric: 'worshipPolicyChanges', target: 3 },
+  { id: 'sleepy-1', name: '机のすみの居候', description: '居眠りミニちる子を1回起こす', flavor: 'おはようございます。少しだけ満足を預かっていました。', icon: '眠', metric: 'sleepyWakes', target: 1 },
+  { id: 'sleepy-10', name: '寝かせて育てる', description: '居眠りミニちる子を10回起こす', flavor: '起こすたび、机のすみが少し賑やかになります。', icon: '寝', metric: 'sleepyWakes', target: 10, hidden: true },
+  { id: 'sleepy-3', name: '机のすみの大家族', description: '居眠りミニちる子を3人迎える', flavor: '起こさない限り、とても静かな大家族です。', icon: '家', metric: 'maxSleepyChirukos', target: 3, hidden: true },
+
   ...FACILITY_MILESTONE_ACHIEVEMENTS,
   {
     id: THANK_YOU_ACHIEVEMENT_ID,

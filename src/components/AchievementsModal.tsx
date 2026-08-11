@@ -28,6 +28,7 @@ const CATEGORY_LABELS = {
   miracles: '救済',
   prestige: '再布教',
   time: '時間・放置',
+  omens: '御告げ・机のすみ',
 } as const
 
 type AchievementCategory = keyof typeof CATEGORY_LABELS
@@ -39,6 +40,7 @@ const getAchievementCategory = (metric: string): AchievementCategory => {
   if (metric === 'luckyEvents' || metric === 'luckyCombo' || metric === 'luckyChains' || metric === 'luckyVarieties') return 'miracles'
   if (metric === 'prestigeCount' || metric === 'virtueMarks' || metric === 'doctrinesOwned') return 'prestige'
   if (metric === 'playSeconds' || metric === 'offlineSessions' || metric === 'longestOffline') return 'time'
+  if (metric === 'omenCompletions' || metric === 'worshipPolicyChanges' || metric === 'sleepyWakes' || metric === 'maxSleepyChirukos') return 'omens'
   return 'facilities'
 }
 

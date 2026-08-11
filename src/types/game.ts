@@ -1,5 +1,18 @@
 export type EffectType = 'click' | 'perSecond'
 
+export type WorshipPolicy = 'balanced' | 'hands-on' | 'vigil'
+
+export type OmenMetric = 'manualClicks' | 'totalPurchases' | 'luckyEvents' | 'playSeconds' | 'totalOwned'
+
+export interface DailyOmenDefinition {
+  id: string
+  name: string
+  description: string
+  flavor: string
+  metric: OmenMetric
+  target: number
+}
+
 export interface ShopItemDefinition {
   id: string
   name: string
@@ -31,6 +44,10 @@ export type AchievementMetric =
   | 'playSeconds'
   | 'offlineSessions'
   | 'longestOffline'
+  | 'omenCompletions'
+  | 'worshipPolicyChanges'
+  | 'sleepyWakes'
+  | 'maxSleepyChirukos'
 
 export interface AchievementDefinition {
   id: string
@@ -132,6 +149,17 @@ export interface GameState {
   longestOfflineSeconds: number
   playSeconds: number
   highestPerSecond: number
+  dailyOmenDate: string
+  dailyOmenId: string
+  dailyOmenStartValue: number
+  dailyOmenCompleted: boolean
+  dailyOmenCompletions: number
+  worshipPolicy: WorshipPolicy
+  worshipPolicyChanges: number
+  sleepyChirukos: number
+  sleepyBank: number
+  sleepyTotalWoken: number
+  maxSleepyChirukos: number
   startedAt: number
   unlockedAchievementIds: string[]
   viewedMemorialIds: string[]

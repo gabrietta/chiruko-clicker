@@ -24,6 +24,12 @@ export const GAME_CONFIG = {
     comboAssistUsesPerBuffWindow: 1,
     maxConcurrentBuffs: 3,
   },
+  sleepyChiruko: {
+    unlockThresholds: [25, 100, 250],
+    sharePerChiruko: 0.01,
+    wakeBonus: 1.05,
+    bankCapSeconds: 3_600,
+  },
   anomalyDetection: {
     luckyWindowMs: 30_000,
     // A chain legitimately fires three follow-up events about 900 ms apart.

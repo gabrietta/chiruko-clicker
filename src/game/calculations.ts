@@ -2,7 +2,8 @@ import { GAME_CONFIG, SHOP_ITEMS } from '../config/gameConfig'
 import { getActiveSeason } from '../config/seasons'
 import { UPGRADES } from '../config/upgrades'
 import { getDoctrineEffect } from '../config/doctrines'
-import type { GameState, ShopItemDefinition } from '../types/game'
+import { getWorshipPolicy } from '../config/worshipPolicies'
+import type { GameState, ShopItemDefinition, WorshipPolicy } from '../types/game'
 
 export const getItemCost = (item: ShopItemDefinition, owned: number) =>
   Math.ceil(item.baseCost * item.costGrowth ** owned)
@@ -62,6 +63,12 @@ export const getVirtueMarkMultiplier = (virtueMarks: number) =>
 export const getVirtueMarkBonusPercent = (virtueMarks: number) =>
   Math.round((getVirtueMarkMultiplier(virtueMarks) - 1) * 100)
 
+export const getSleepyChirukoSlots = (inventory: Record<string, number>) =>
+  [25, 100, 250].filter((target) => Object.values(inventory).reduce((sum, count) => sum + count, 0) >= target).length
+
+export const getSleepyBankCap = (perSecond: number, existing = 0) =>
+  Math.max(existing, perSecond * GAME_CONFIG.sleepyChiruko.bankCapSeconds)
+
 export const getClickComboMultiplier = (combo: number) =>
   1 + Math.min(0.15, Math.max(0, combo - 1) * 0.005)
 
@@ -70,6 +77,7 @@ export const getClickPower = (
   purchasedUpgradeIds: string[] = [],
   virtueMarks = 0,
   purchasedDoctrineIds: string[] = [],
+  worshipPolicy: WorshipPolicy = 'balanced',
 ) => {
   const base = 1 + SHOP_ITEMS.reduce((total, item) => {
     if (item.effectType !== 'click') return total
@@ -81,7 +89,8 @@ export const getClickPower = (
     getUpgradeMultiplier(purchasedUpgradeIds, 'clickMultiplier') *
     getDoctrineEffect(purchasedDoctrineIds, 'clickMultiplier') *
     prestigeMultiplier *
-    getActiveSeason().clickMultiplier
+    getActiveSeason().clickMultiplier *
+    getWorshipPolicy(worshipPolicy).clickMultiplier
 }
 
 export const getAchievementMultiplier = (
@@ -109,6 +118,7 @@ export const getSatisfactionPerSecond = (
   purchasedUpgradeIds: string[] = [],
   virtueMarks = 0,
   purchasedDoctrineIds: string[] = [],
+  worshipPolicy: WorshipPolicy = 'balanced',
 ) => {
   const prestigeMultiplier = getVirtueMarkMultiplier(virtueMarks)
   return getBaseSatisfactionPerSecond(inventory, purchasedUpgradeIds) *
@@ -116,7 +126,8 @@ export const getSatisfactionPerSecond = (
     getGlobalProductionUpgradeMultiplier(purchasedUpgradeIds) *
     getDoctrineEffect(purchasedDoctrineIds, 'productionMultiplier') *
     prestigeMultiplier *
-    getActiveSeason().productionMultiplier
+    getActiveSeason().productionMultiplier *
+    getWorshipPolicy(worshipPolicy).productionMultiplier
 }
 
 export const getPrestigeGain = (runSatisfaction: number) =>

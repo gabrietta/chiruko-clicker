@@ -18,6 +18,7 @@ export const getAchievementProgress = (
         game.purchasedUpgradeIds,
         game.virtueMarks,
         game.purchasedDoctrineIds,
+        game.worshipPolicy,
       )
     case 'totalOwned':
       return getTotalOwned(game.inventory)
@@ -49,6 +50,14 @@ export const getAchievementProgress = (
       return game.offlineSessions
     case 'longestOffline':
       return game.longestOfflineSeconds
+    case 'omenCompletions':
+      return game.dailyOmenCompletions
+    case 'worshipPolicyChanges':
+      return game.worshipPolicyChanges
+    case 'sleepyWakes':
+      return game.sleepyTotalWoken
+    case 'maxSleepyChirukos':
+      return game.maxSleepyChirukos
   }
 }
 

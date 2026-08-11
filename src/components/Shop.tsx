@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { SHOP_ITEMS } from '../config/gameConfig'
 import { getActiveSeason } from '../config/seasons'
 import { UPGRADES } from '../config/upgrades'
+import { getWorshipPolicy } from '../config/worshipPolicies'
 import {
   FACILITY_MILESTONE_MULTIPLIER,
   getBulkItemCost,
@@ -47,7 +48,7 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
     upgrade.effectType === 'clickMultiplier' && game.purchasedUpgradeIds.includes(upgrade.id)
       ? multiplier * upgrade.effectValue
       : multiplier
-  ), 1) * getVirtueMarkMultiplier(game.virtueMarks) * getActiveSeason().clickMultiplier
+  ), 1) * getVirtueMarkMultiplier(game.virtueMarks) * getActiveSeason().clickMultiplier * getWorshipPolicy(game.worshipPolicy).clickMultiplier
 
   const showTooltip = (itemId: string, element: HTMLElement, autoHide = false) => {
     const rect = element.getBoundingClientRect()

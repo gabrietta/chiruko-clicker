@@ -16,6 +16,7 @@ import { GAME_CONFIG, SHOP_ITEMS } from './config/gameConfig'
 import { getActiveSeason } from './config/seasons'
 import { UPGRADES } from './config/upgrades'
 import { DOCTRINES, getDoctrineEffect } from './config/doctrines'
+import { getWorshipPolicy } from './config/worshipPolicies'
 import { MEMORIALS } from './config/memorials'
 import {
   getAchievementMultiplier,
@@ -33,6 +34,7 @@ function App() {
     luckyEventVisible, activeBuffs, chainRemaining, clickCharacter, purchaseItem, purchaseUpgrade,
     purchaseDoctrine, selectCosmetic, claimLuckyEvent, prestige, dismissOfflineReport,
     dismissLatestAchievement, markMemorialViewed, resetGame, resumeFromAnomaly, exportSave, importSave,
+    claimDailyOmen, setWorshipPolicy, sendSleepyChiruko, wakeSleepyChiruko,
   } = useGame()
   const { audioPreferences, updateAudioPreferences } = useAudioSettings()
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -126,7 +128,8 @@ function App() {
   const coreProductionMultiplier = season.productionMultiplier *
     getVirtueMarkMultiplier(game.virtueMarks) *
     getDoctrineEffect(game.purchasedDoctrineIds, 'productionMultiplier') *
-    getGlobalProductionUpgradeMultiplier(game.purchasedUpgradeIds)
+    getGlobalProductionUpgradeMultiplier(game.purchasedUpgradeIds) *
+    getWorshipPolicy(game.worshipPolicy).productionMultiplier
 
   return (
     <div className="app-shell busy-edition" onPointerDown={unlockAudio}>
@@ -155,7 +158,7 @@ function App() {
 
       <main className="game-grid three-panel-grid">
         <MainStage satisfaction={game.satisfaction} totalSatisfaction={game.totalSatisfaction} manualClicks={game.manualClicks} inventory={game.inventory} achievementCount={achievementCount} achievementBonusPercent={Math.round((achievementMultiplier - 1) * 100)} clickPower={clickPower} perSecond={satisfactionPerSecond} nextGoal={nextGoal} luckyEventVisible={luckyEventVisible} activeBuffs={activeBuffs} chainRemaining={chainRemaining} clickCombo={game.clickCombo} selectedCharacterSkin={game.selectedCharacterSkin} selectedStageTheme={game.selectedStageTheme} onCharacterClick={handleCharacterClick} onLuckyEvent={handleLuckyEvent} onOpenAchievements={() => setAchievementsOpen(true)} onDialogue={playVoice} />
-        <WorldPanel game={game} perSecond={satisfactionPerSecond} achievementMultiplier={achievementMultiplier} productionMultiplier={coreProductionMultiplier} season={season} onOpenStats={() => setStatsOpen(true)} onOpenPrestige={() => setPrestigeOpen(true)} />
+        <WorldPanel game={game} perSecond={satisfactionPerSecond} achievementMultiplier={achievementMultiplier} productionMultiplier={coreProductionMultiplier} season={season} onOpenStats={() => setStatsOpen(true)} onOpenPrestige={() => setPrestigeOpen(true)} onClaimOmen={() => { if (claimDailyOmen()) { playEffectSound('achievement'); showToast('本日のお告げを達成しました') } }} onSetWorshipPolicy={(policy) => { if (setWorshipPolicy(policy)) showToast('礼拝方針を変更しました') }} onSendSleepyChiruko={() => { if (sendSleepyChiruko()) showToast('ミニちる子を机のすみに寝かせました') }} onWakeSleepyChiruko={() => { const reward = wakeSleepyChiruko(); if (reward > 0) { playEffectSound('lucky'); showToast(`居眠りから${formatNumber(reward)}満足が戻りました`) } }} />
         <Shop game={game} lastPurchasedId={lastPurchasedId} achievementMultiplier={achievementMultiplier} productionMultiplier={coreProductionMultiplier} onPurchase={handlePurchase} onPurchaseUpgrade={handleUpgrade} />
       </main>
 

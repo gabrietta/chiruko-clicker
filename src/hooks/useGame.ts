@@ -3,6 +3,7 @@ import { GAME_CONFIG, SHOP_ITEMS } from '../config/gameConfig'
 import { getActiveSeason } from '../config/seasons'
 import { UPGRADES } from '../config/upgrades'
 import { ALL_COSMETICS, isCosmeticUnlocked } from '../config/cosmetics'
+import { getDailyOmen, getOmenProgress, syncDailyOmen } from '../config/omens'
 import {
   areDoctrineRequirementsMet,
   DOCTRINES,
@@ -16,6 +17,8 @@ import {
   getClickComboMultiplier,
   getPrestigeGain,
   getSatisfactionPerSecond,
+  getSleepyBankCap,
+  getSleepyChirukoSlots,
   isUpgradeUnlocked,
 } from '../game/calculations'
 import { clearSavedGame, createInitialGame, decodeSaveData, encodeSaveData, loadGame, saveGame } from '../game/storage'
@@ -86,12 +89,14 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
     previous.purchasedUpgradeIds,
     previous.virtueMarks,
     previous.purchasedDoctrineIds,
+    previous.worshipPolicy,
   )
   const baseClick = getClickPower(
     previous.inventory,
     previous.purchasedUpgradeIds,
     previous.virtueMarks,
     previous.purchasedDoctrineIds,
+    previous.worshipPolicy,
   )
   const production = baseProduction * getBuffMultiplier(buffs, 'production')
   const click = baseClick * getClickComboMultiplier(50) * getBuffMultiplier(buffs, 'click')
@@ -122,6 +127,7 @@ export const useGame = () => {
   const initialLoad = useRef<ReturnType<typeof loadGame> | null>(null)
   if (!initialLoad.current) {
     const loaded = loadGame()
+    loaded.game = syncDailyOmen(loaded.game)
     loaded.game = unlockEarnedAchievements(loaded.game).game
     initialLoad.current = loaded
   }
@@ -151,8 +157,9 @@ export const useGame = () => {
       game.purchasedUpgradeIds,
       game.virtueMarks,
       game.purchasedDoctrineIds,
+      game.worshipPolicy,
     ) * getClickComboMultiplier(game.clickCombo) * getBuffMultiplier(activeBuffs, 'click'),
-    [activeBuffs, game.clickCombo, game.inventory, game.purchasedDoctrineIds, game.purchasedUpgradeIds, game.virtueMarks],
+    [activeBuffs, game.clickCombo, game.inventory, game.purchasedDoctrineIds, game.purchasedUpgradeIds, game.virtueMarks, game.worshipPolicy],
   )
   const satisfactionPerSecond = useMemo(
     () => getSatisfactionPerSecond(
@@ -161,8 +168,9 @@ export const useGame = () => {
       game.purchasedUpgradeIds,
       game.virtueMarks,
       game.purchasedDoctrineIds,
+      game.worshipPolicy,
     ) * getBuffMultiplier(activeBuffs, 'production'),
-    [activeBuffs, game.inventory, game.purchasedDoctrineIds, game.purchasedUpgradeIds, game.unlockedAchievementIds.length, game.virtueMarks],
+    [activeBuffs, game.inventory, game.purchasedDoctrineIds, game.purchasedUpgradeIds, game.unlockedAchievementIds.length, game.virtueMarks, game.worshipPolicy],
   )
 
   useEffect(() => {
@@ -187,11 +195,17 @@ export const useGame = () => {
   }, [])
 
   const commit = useCallback((candidate: GameState, persistNow = false) => {
-    const anomalyReason = getAnomalyReason(gameRef.current, candidate, activeBuffsRef.current)
+    const current = syncDailyOmen(gameRef.current)
+    const prepared = syncDailyOmen(candidate)
+    if (current !== gameRef.current) {
+      gameRef.current = current
+      setGame(current)
+    }
+    const anomalyReason = getAnomalyReason(current, prepared, activeBuffsRef.current)
     // Protect the save by rejecting only the suspicious update. A local-only
     // game should never lock an entire player out because of a false positive.
     if (anomalyReason) return gameRef.current
-    const result = unlockEarnedAchievements(candidate)
+    const result = unlockEarnedAchievements(prepared)
     const next = result.game
     gameRef.current = next
     setGame(next)
@@ -229,9 +243,14 @@ export const useGame = () => {
         gameRef.current.purchasedUpgradeIds,
         gameRef.current.virtueMarks,
         gameRef.current.purchasedDoctrineIds,
+        gameRef.current.worshipPolicy,
       ) * getBuffMultiplier(activeBuffsRef.current, 'production')
       if (rate <= 0 && playGain <= 0) return
       const gain = rate * elapsed
+      const sleepyBank = Math.min(
+        getSleepyBankCap(rate, gameRef.current.sleepyBank),
+        gameRef.current.sleepyBank + gain * gameRef.current.sleepyChirukos * GAME_CONFIG.sleepyChiruko.sharePerChiruko,
+      )
       commit({
         ...gameRef.current,
         satisfaction: gameRef.current.satisfaction + gain,
@@ -239,6 +258,7 @@ export const useGame = () => {
         runSatisfaction: gameRef.current.runSatisfaction + gain,
         playSeconds: gameRef.current.playSeconds + playGain,
         highestPerSecond: Math.max(gameRef.current.highestPerSecond, rate),
+        sleepyBank,
       })
     }, GAME_CONFIG.productionTickMs)
 
@@ -309,6 +329,7 @@ export const useGame = () => {
       previous.purchasedUpgradeIds,
       previous.virtueMarks,
       previous.purchasedDoctrineIds,
+      previous.worshipPolicy,
     ) * getClickComboMultiplier(nextCombo) * getBuffMultiplier(activeBuffsRef.current, 'click')
     commit({
       ...previous,
@@ -396,6 +417,7 @@ export const useGame = () => {
       gameRef.current.purchasedUpgradeIds,
       gameRef.current.virtueMarks,
       gameRef.current.purchasedDoctrineIds,
+      gameRef.current.worshipPolicy,
     )
     const baseReward = Math.ceil(Math.max(
       25,
@@ -405,6 +427,7 @@ export const useGame = () => {
         gameRef.current.purchasedUpgradeIds,
         gameRef.current.virtueMarks,
         gameRef.current.purchasedDoctrineIds,
+        gameRef.current.worshipPolicy,
       ) * 20,
     ) * getActiveSeason().luckyMultiplier)
     const liveBuffs = activeBuffsRef.current.filter((active) => active.expiresAt > now)
@@ -525,6 +548,59 @@ export const useGame = () => {
     return { amount: reward, message, buff, chainStarted, chainCompleted, eventType }
   }, [chainRemaining, commit, luckyEventVisible])
 
+  const claimDailyOmen = useCallback(() => {
+    const current = syncDailyOmen(gameRef.current)
+    const omen = getDailyOmen()
+    if (current.dailyOmenCompleted || getOmenProgress(current, omen) < omen.target) return false
+    commit({
+      ...current,
+      dailyOmenCompleted: true,
+      dailyOmenCompletions: current.dailyOmenCompletions + 1,
+    }, true)
+    return true
+  }, [commit])
+
+  const setWorshipPolicy = useCallback((policy: GameState['worshipPolicy']) => {
+    const current = gameRef.current
+    if (current.worshipPolicy === policy) return false
+    commit({
+      ...current,
+      worshipPolicy: policy,
+      worshipPolicyChanges: current.worshipPolicyChanges + 1,
+    }, true)
+    return true
+  }, [commit])
+
+  const sendSleepyChiruko = useCallback(() => {
+    const current = gameRef.current
+    const slots = getSleepyChirukoSlots(current.inventory)
+    if (current.sleepyChirukos >= slots) return false
+    const nextCount = current.sleepyChirukos + 1
+    commit({
+      ...current,
+      sleepyChirukos: nextCount,
+      maxSleepyChirukos: Math.max(current.maxSleepyChirukos, nextCount),
+    }, true)
+    return true
+  }, [commit])
+
+  const wakeSleepyChiruko = useCallback(() => {
+    const current = gameRef.current
+    if (current.sleepyChirukos <= 0) return 0
+    const bankShare = current.sleepyBank / current.sleepyChirukos
+    const reward = bankShare * GAME_CONFIG.sleepyChiruko.wakeBonus
+    commit({
+      ...current,
+      satisfaction: current.satisfaction + reward,
+      totalSatisfaction: current.totalSatisfaction + reward,
+      runSatisfaction: current.runSatisfaction + reward,
+      sleepyChirukos: current.sleepyChirukos - 1,
+      sleepyBank: Math.max(0, current.sleepyBank - bankShare),
+      sleepyTotalWoken: current.sleepyTotalWoken + 1,
+    }, true)
+    return reward
+  }, [commit])
+
   const purchaseDoctrine = useCallback((doctrineId: string) => {
     const doctrine = DOCTRINES.find((candidate) => candidate.id === doctrineId)
     if (!doctrine || gameRef.current.purchasedDoctrineIds.includes(doctrineId)) return false
@@ -586,6 +662,17 @@ export const useGame = () => {
       purchasedDoctrineIds: gameRef.current.purchasedDoctrineIds,
       selectedCharacterSkin: gameRef.current.selectedCharacterSkin,
       selectedStageTheme: gameRef.current.selectedStageTheme,
+      dailyOmenDate: gameRef.current.dailyOmenDate,
+      dailyOmenId: gameRef.current.dailyOmenId,
+      dailyOmenStartValue: gameRef.current.dailyOmenStartValue,
+      dailyOmenCompleted: gameRef.current.dailyOmenCompleted,
+      dailyOmenCompletions: gameRef.current.dailyOmenCompletions,
+      worshipPolicy: gameRef.current.worshipPolicy,
+      worshipPolicyChanges: gameRef.current.worshipPolicyChanges,
+      sleepyChirukos: 0,
+      sleepyBank: 0,
+      sleepyTotalWoken: gameRef.current.sleepyTotalWoken,
+      maxSleepyChirukos: gameRef.current.maxSleepyChirukos,
       maxBuffCombo: gameRef.current.maxBuffCombo,
       luckyChainsCompleted: gameRef.current.luckyChainsCompleted,
       clickCombo: 0,
@@ -702,6 +789,10 @@ export const useGame = () => {
     purchaseItem,
     purchaseUpgrade,
     purchaseDoctrine,
+    claimDailyOmen,
+    setWorshipPolicy,
+    sendSleepyChiruko,
+    wakeSleepyChiruko,
     selectCosmetic,
     markMemorialViewed,
     claimLuckyEvent,
