@@ -77,6 +77,19 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
 
   const gain = candidate.totalSatisfaction - previous.totalSatisfaction
   const luckyRewardGain = candidate.totalLuckyRewards - previous.totalLuckyRewards
+  const sleepyShare = previous.sleepyChirukos > 0
+    ? previous.sleepyBank / previous.sleepyChirukos
+    : 0
+  const sleepyWakeReward = sleepyShare * GAME_CONFIG.sleepyChiruko.wakeBonus
+  const sleepyWakeTolerance = Number.EPSILON * Math.max(1, Math.abs(sleepyShare), Math.abs(sleepyWakeReward)) * 32
+  const isSleepyWake = previous.sleepyChirukos > 0 &&
+    candidate.sleepyChirukos === previous.sleepyChirukos - 1 &&
+    candidate.sleepyTotalWoken === previous.sleepyTotalWoken + 1 &&
+    candidate.maxSleepyChirukos === previous.maxSleepyChirukos &&
+    Math.abs((previous.sleepyBank - candidate.sleepyBank) - sleepyShare) <= sleepyWakeTolerance &&
+    Math.abs((candidate.satisfaction - previous.satisfaction) - sleepyWakeReward) <= sleepyWakeTolerance &&
+    Math.abs((candidate.totalSatisfaction - previous.totalSatisfaction) - sleepyWakeReward) <= sleepyWakeTolerance &&
+    Math.abs((candidate.runSatisfaction - previous.runSatisfaction) - sleepyWakeReward) <= sleepyWakeTolerance
   // 旧バージョンでは、奇跡報酬の累計だけ別の計算方法で保存された
   // セーブがありました。この値を今回の増加量と比較すると、再布教後の
   // 大きな救済印・連鎖報酬を正しく遊んでいる人まで誤検知します。
@@ -108,6 +121,7 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
     100_000,
     (production + click) * GAME_CONFIG.anomalyDetection.maxGainRateMultiplier,
     maxLuckyReward,
+    isSleepyWake ? sleepyWakeReward : 0,
   )
   if (gain > allowedGain) return '満足の増え方が、ちる子の想定を大きく超えました。'
   const satisfactionGain = candidate.satisfaction - previous.satisfaction
@@ -589,7 +603,7 @@ export const useGame = () => {
     if (current.sleepyChirukos <= 0) return 0
     const bankShare = current.sleepyBank / current.sleepyChirukos
     const reward = bankShare * GAME_CONFIG.sleepyChiruko.wakeBonus
-    commit({
+    const next = commit({
       ...current,
       satisfaction: current.satisfaction + reward,
       totalSatisfaction: current.totalSatisfaction + reward,
@@ -598,7 +612,10 @@ export const useGame = () => {
       sleepyBank: Math.max(0, current.sleepyBank - bankShare),
       sleepyTotalWoken: current.sleepyTotalWoken + 1,
     }, true)
-    return reward
+    return next.sleepyChirukos === current.sleepyChirukos - 1 &&
+      next.sleepyTotalWoken === current.sleepyTotalWoken + 1
+      ? reward
+      : 0
   }, [commit])
 
   const purchaseDoctrine = useCallback((doctrineId: string) => {
