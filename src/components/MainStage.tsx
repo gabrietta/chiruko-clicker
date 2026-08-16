@@ -5,6 +5,7 @@ import { getDialogueCandidates } from '../config/dialogues'
 import type { ActiveBuff, ShopItemDefinition } from '../types/game'
 import { formatDetailedNumber, formatNumber } from '../utils/format'
 import { assetPath } from '../utils/assetPath'
+import { getItemCost } from '../game/calculations'
 
 interface EffectParticle {
   id: number
@@ -44,6 +45,7 @@ interface MainStageProps {
   onLuckyEvent: () => void
   onOpenAchievements: () => void
   onDialogue: (line: string) => void
+  onPurchaseItem: (itemId: string) => void
 }
 
 export const MainStage = ({
@@ -66,6 +68,7 @@ export const MainStage = ({
   onLuckyEvent,
   onOpenAchievements,
   onDialogue,
+  onPurchaseItem,
 }: MainStageProps) => {
   const zoneRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
@@ -322,10 +325,10 @@ export const MainStage = ({
         <span className="parade-label">机のすみ</span>
         <div className="parade-track" role="region" aria-label="所有設備の個数。横にスクロールしてすべて確認できます" tabIndex={0}>
           {SHOP_ITEMS.map((item) => (
-            <div className={`parade-unit ${(inventory[item.id] ?? 0) > 0 ? 'active' : ''}`} key={item.id} title={`${item.name} × ${inventory[item.id] ?? 0}`}>
+            <button type="button" disabled={satisfaction < getItemCost(item, inventory[item.id] ?? 0)} className={`parade-unit ${(inventory[item.id] ?? 0) > 0 ? 'active' : ''}`} key={item.id} title={`${item.name} × ${inventory[item.id] ?? 0}`} onClick={() => onPurchaseItem(item.id)} aria-label={`${item.name}を1個、${formatNumber(getItemCost(item, inventory[item.id] ?? 0))}満足で購入`}>
               <span aria-hidden="true">{item.imagePath ? <img src={assetPath(item.imagePath)} alt="" /> : item.icon}</span>
               <b>{inventory[item.id] ?? 0}</b>
-            </div>
+            </button>
           ))}
         </div>
       </div>

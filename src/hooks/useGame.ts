@@ -23,6 +23,7 @@ import {
 } from '../game/calculations'
 import { clearSavedGame, createInitialGame, decodeSaveData, encodeSaveData, loadGame, saveGame } from '../game/storage'
 import type { ActiveBuff, AchievementDefinition, GameState, LuckyEventResult, OfflineReport } from '../types/game'
+import { logDiagnostic } from '../game/diagnostics'
 
 const randomBetween = (min: number, max: number) =>
   Math.round(min + Math.random() * (max - min))
@@ -218,7 +219,9 @@ export const useGame = () => {
     const anomalyReason = getAnomalyReason(current, prepared, activeBuffsRef.current)
     // Protect the save by rejecting only the suspicious update. A local-only
     // game should never lock an entire player out because of a false positive.
-    if (anomalyReason) return gameRef.current
+    if (anomalyReason) {
+      const changes = Object.keys(current).filter((key) => typeof current[key as keyof GameState] === 'number' && current[key as keyof GameState] !== prepared[key as keyof GameState]).slice(0, 30).map((key) => ({ key, previous: current[key as keyof GameState], candidate: prepared[key as keyof GameState], delta: (prepared[key as keyof GameState] as number) - (current[key as keyof GameState] as number) }))
+      logDiagnostic('commit-rejected', 'anomaly', { reason: anomalyReason, numericChanges: changes }, 'warn'); return gameRef.current }
     const result = unlockEarnedAchievements(prepared)
     const next = result.game
     gameRef.current = next
@@ -242,6 +245,7 @@ export const useGame = () => {
   }, [commit, game.clickCombo, game.clickComboLastAt])
 
   useEffect(() => {
+    logDiagnostic('game-loaded', 'lifecycle', { saveVersion: gameRef.current.version })
     persist(gameRef.current, false)
 
     const productionTimer = window.setInterval(() => {
@@ -588,19 +592,22 @@ export const useGame = () => {
   const sendSleepyChiruko = useCallback(() => {
     const current = gameRef.current
     const slots = getSleepyChirukoSlots(current.inventory)
-    if (current.sleepyChirukos >= slots) return false
+    if (current.sleepyChirukos >= slots) { logDiagnostic('sleepy-send-failure', 'sleepy', { count: current.sleepyChirukos, slots }, 'warn'); return false }
     const nextCount = current.sleepyChirukos + 1
-    commit({
+    const next = commit({
       ...current,
       sleepyChirukos: nextCount,
       maxSleepyChirukos: Math.max(current.maxSleepyChirukos, nextCount),
     }, true)
-    return true
+    const success = next.sleepyChirukos === nextCount
+    logDiagnostic(success ? 'sleepy-send-success' : 'sleepy-send-failure', 'sleepy', { count: next.sleepyChirukos }, success ? 'info' : 'warn')
+    return success
   }, [commit])
 
   const wakeSleepyChiruko = useCallback(() => {
     const current = gameRef.current
-    if (current.sleepyChirukos <= 0) return 0
+    if (current.sleepyChirukos <= 0) { logDiagnostic('sleepy-wake-failure', 'sleepy', { count: 0 }, 'warn'); return 0 }
+    logDiagnostic('sleepy-wake-request', 'sleepy', { count: current.sleepyChirukos })
     const bankShare = current.sleepyBank / current.sleepyChirukos
     const reward = bankShare * GAME_CONFIG.sleepyChiruko.wakeBonus
     const next = commit({
@@ -612,10 +619,10 @@ export const useGame = () => {
       sleepyBank: Math.max(0, current.sleepyBank - bankShare),
       sleepyTotalWoken: current.sleepyTotalWoken + 1,
     }, true)
-    return next.sleepyChirukos === current.sleepyChirukos - 1 &&
+    const success = next.sleepyChirukos === current.sleepyChirukos - 1 &&
       next.sleepyTotalWoken === current.sleepyTotalWoken + 1
-      ? reward
-      : 0
+    logDiagnostic(success ? 'sleepy-wake-success' : 'sleepy-wake-failure', 'sleepy', { reward, count: next.sleepyChirukos }, success ? 'info' : 'warn')
+    return success ? reward : 0
   }, [commit])
 
   const purchaseDoctrine = useCallback((doctrineId: string) => {
@@ -783,8 +790,9 @@ export const useGame = () => {
       lastLuckyClaimAtRef.current = 0
       setLuckyCycle((cycle) => cycle + 1)
       persist(unlocked)
-      return true
-    } catch {
+      logDiagnostic('save-import-success', 'storage', { saveVersion: unlocked.version }); return true
+    } catch (error) {
+      logDiagnostic('save-import-failure', 'storage', error, 'warn')
       return false
     }
   }, [persist])

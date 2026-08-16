@@ -964,6 +964,9 @@
 }
 
 @media (max-width: 840px) {
+  .busy-edition .achievement-header-button { width: auto; min-width: 64px; padding: 4px 6px; }
+  .busy-edition .achievement-header-button > span:last-child { display: flex; flex-direction: column; }
+  .busy-edition .achievement-header-button small, .busy-edition .achievement-header-button strong { font-size: 9px; line-height: 1.1; }
   .app-shell {
     display: block;
   }
@@ -1290,6 +1293,8 @@
 .achievement-header-button strong {
   font-size: 12px;
 }
+.item-detail-button { border: 1px solid rgba(255,255,255,.2); background: transparent; color: inherit; padding: 2px 8px; border-radius: 999px; cursor: pointer; font: inherit; }
+.parade-unit { border: 0; font: inherit; color: inherit; cursor: pointer; }
 
 .achievement-ring {
   --progress: 0deg;
@@ -2366,9 +2371,8 @@
     grid-template-columns: 1.35fr 0.8fr 0.8fr;
   }
 
-  .achievement-header-button {
-    display: none;
-  }
+  .busy-edition .achievement-header-button { display: flex; width: auto; min-width: 62px; padding: 3px 5px; }
+  .busy-edition .achievement-header-button > span:last-child { display: flex; flex-direction: column; }
 
   .news-label {
     padding-inline: 6px;

@@ -112,17 +112,8 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
                   <article
                     className={`shop-item ${canBuy ? 'can-buy' : 'cannot-buy'} ${lastPurchasedId === item.id ? 'just-bought' : ''}`}
                     key={item.id}
-                    tabIndex={0}
-                    aria-describedby={tooltip?.itemId === item.id ? 'facility-detail-tooltip' : undefined}
-                    onMouseEnter={(event) => showTooltip(item.id, event.currentTarget)}
-                    onMouseLeave={() => setTooltip((current) => current?.itemId === item.id ? null : current)}
-                    onFocus={(event) => showTooltip(item.id, event.currentTarget)}
-                    onBlur={(event) => {
-                      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setTooltip(null)
-                    }}
-                    onPointerDown={(event) => {
-                      if (event.pointerType === 'touch' && !(event.target as HTMLElement).closest('button')) showTooltip(item.id, event.currentTarget, true)
-                    }}
+                    onPointerEnter={(event) => { if (event.pointerType === 'mouse') showTooltip(item.id, event.currentTarget) }}
+                    onPointerLeave={() => setTooltip((current) => current?.itemId === item.id ? null : current)}
                   >
                     <span className="item-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                     <div className="item-icon" aria-hidden="true">{item.imagePath ? <img src={assetPath(item.imagePath)} alt="" /> : item.icon}</div>
@@ -130,6 +121,7 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
                       <div className="item-title-line"><h3>{item.name}</h3><span className="owned-pill">× {owned}</span>{milestoneMultiplier > 1 && <span className="milestone-multiplier">×{milestoneMultiplier}</span>}</div>
                       <p className="item-description">{item.description}</p>
                       <div className="item-production-line"><span className="item-effect">{effectLabel}</span>{item.effectType === 'perSecond' && owned > 0 && <span className="item-total-output">計 +{formatNumber(item.effectValue * itemMultiplier * milestoneMultiplier * owned * achievementMultiplier * productionMultiplier)}/秒</span>}</div>
+                      <button type="button" className="item-detail-button" onClick={(event) => { event.stopPropagation(); showTooltip(item.id, event.currentTarget.closest('.shop-item') as HTMLElement, true) }}>詳細</button>
                       <span className={`milestone-progress ${nextMilestone ? '' : 'complete'}`}>{nextMilestone ? `あと${nextMilestone - owned}個で生産×${FACILITY_MILESTONE_MULTIPLIER}` : '節目ボーナス最大'}</span>
                     </div>
                     <button type="button" className="buy-button" disabled={!canBuy} onClick={() => { setTooltip(null); onPurchase(item.id, quantity) }} aria-label={`${item.name}を${quantity}個、${formatNumber(cost)}満足で購入`}>

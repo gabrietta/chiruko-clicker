@@ -11,6 +11,8 @@ interface SettingsModalProps {
   onResumeAnomaly: () => boolean
   onExportSave: () => string
   onImportSave: (code: string) => boolean
+  onExportDiagnostics: () => Promise<'success' | 'cancel' | 'failure'>
+  onClearDiagnostics: () => void
 }
 
 const Toggle = ({ label, note, checked, disabled, onChange }: { label: string; note: string; checked: boolean; disabled?: boolean; onChange: (checked: boolean) => void }) => (
@@ -21,7 +23,7 @@ const Toggle = ({ label, note, checked, disabled, onChange }: { label: string; n
   </label>
 )
 
-export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onReset, anomalyFrozen, anomalyReason, onResumeAnomaly, onExportSave, onImportSave }: SettingsModalProps) => {
+export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onReset, anomalyFrozen, anomalyReason, onResumeAnomaly, onExportSave, onImportSave, onExportDiagnostics, onClearDiagnostics }: SettingsModalProps) => {
   const [saveCode, setSaveCode] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
   const confirmReset = () => {
@@ -53,6 +55,7 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
     if (!window.confirm('安全確認を解除して再開します。これはBANではなく、満足・累計満足・設備・実績・救済印は減りません。続けますか？')) return
     onResumeAnomaly()
   }
+  const handleDiagnostics = async () => { const result = await onExportDiagnostics(); setSaveMessage(result === 'success' ? '診断データを書き出しました。' : result === 'cancel' ? '共有をキャンセルしました。' : '診断データの書き出しを完了できませんでした。') }
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
@@ -80,6 +83,10 @@ export const SettingsModal = ({ audioPreferences, onUpdateAudio, onClose, onRese
           <textarea value={saveCode} onChange={(event) => setSaveCode(event.target.value)} placeholder="ここへセーブコードを貼り付け" aria-label="セーブコード" />
           <div className="save-transfer-actions"><button className="secondary-button" type="button" onClick={handleExport}>セーブを書き出す</button><button className="secondary-button" type="button" onClick={handleImport}>セーブを読み込む</button></div>
           {saveMessage && <small className="save-transfer-message" role="status">{saveMessage}</small>}
+        </div>
+        <div className="settings-section save-transfer-section">
+          <div className="settings-section-title"><strong>不具合調査用データ</strong><span>ゲーム進行状況、直近の重要処理、端末・ブラウザの基本情報を含みます。外部へ自動送信されません。</span></div>
+          <div className="save-transfer-actions"><button className="secondary-button" type="button" onClick={handleDiagnostics}>診断データを書き出す</button><button className="secondary-button" type="button" onClick={() => { if (window.confirm('診断ログだけを消去します。ゲーム進行状況は消えません。')) { onClearDiagnostics(); setSaveMessage('診断ログを消去しました。') } }}>診断ログを消去</button></div>
         </div>
         <div className="settings-actions"><button className="danger-button" type="button" onClick={confirmReset}>全データをリセット</button><button className="secondary-button" type="button" onClick={onClose} autoFocus>ゲームに戻る</button></div>
       </section>

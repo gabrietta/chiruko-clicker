@@ -27,6 +27,8 @@ import {
 import { useAudioSettings } from './hooks/useAudioSettings'
 import { useGame } from './hooks/useGame'
 import { formatNumber } from './utils/format'
+import { clearDiagnosticLogs, diagnosticsFilename, logDiagnostic, makeDiagnostics } from './game/diagnostics'
+import { getSleepyChirukoSlots } from './game/calculations'
 
 function App() {
   const {
@@ -45,6 +47,23 @@ function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [lastPurchasedId, setLastPurchasedId] = useState<string | null>(null)
   const season = getActiveSeason()
+  useEffect(() => {
+    const onError = (event: ErrorEvent) => { let source = event.filename; try { const url = new URL(source); source = `${url.origin}${url.pathname}` } catch { source = source.slice(0, 500) }; logDiagnostic('window-error', 'runtime', { message: event.message, source, line: event.lineno }, 'error') }
+    const onRejection = (event: PromiseRejectionEvent) => logDiagnostic('unhandled-rejection', 'runtime', event.reason, 'error')
+    window.addEventListener('error', onError); window.addEventListener('unhandledrejection', onRejection)
+    return () => { window.removeEventListener('error', onError); window.removeEventListener('unhandledrejection', onRejection) }
+  }, [])
+  const exportDiagnostics = async (): Promise<'success' | 'cancel' | 'failure'> => {
+    try {
+      logDiagnostic('diagnostics-export-request', 'diagnostics')
+      const data = makeDiagnostics(game, { productionPerSecond: satisfactionPerSecond, clickPower, totalEquipment: Object.values(game.inventory).reduce((sum, count) => sum + count, 0), sleepySlots: getSleepyChirukoSlots(game.inventory) })
+      const text = JSON.stringify(data, null, 2); const filename = diagnosticsFilename(); const file = new File([text], filename, { type: 'application/json' })
+      const share = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean; share?: (data: { files: File[]; title: string }) => Promise<void> }
+      if (share.canShare?.({ files: [file] }) && share.share) { try { await share.share({ files: [file], title: 'ちる子診断データ' }); logDiagnostic('diagnostics-export-success', 'diagnostics', { method: 'share' }); return 'success' } catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return 'cancel' } }
+      const blob = new Blob([text], { type: 'application/json;charset=utf-8' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = filename; anchor.style.display = 'none'; document.body.appendChild(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+      logDiagnostic('diagnostics-export-success', 'diagnostics', { method: 'download' }); return 'success'
+    } catch (error) { logDiagnostic('diagnostics-export-failure', 'diagnostics', error, 'error'); return 'failure' }
+  }
 
   useEffect(() => {
     if (!latestAchievement) return
@@ -157,7 +176,7 @@ function App() {
       )}
 
       <main className="game-grid three-panel-grid">
-        <MainStage satisfaction={game.satisfaction} totalSatisfaction={game.totalSatisfaction} manualClicks={game.manualClicks} inventory={game.inventory} achievementCount={achievementCount} achievementBonusPercent={Math.round((achievementMultiplier - 1) * 100)} clickPower={clickPower} perSecond={satisfactionPerSecond} nextGoal={nextGoal} luckyEventVisible={luckyEventVisible} activeBuffs={activeBuffs} chainRemaining={chainRemaining} clickCombo={game.clickCombo} selectedCharacterSkin={game.selectedCharacterSkin} selectedStageTheme={game.selectedStageTheme} onCharacterClick={handleCharacterClick} onLuckyEvent={handleLuckyEvent} onOpenAchievements={() => setAchievementsOpen(true)} onDialogue={playVoice} />
+        <MainStage satisfaction={game.satisfaction} totalSatisfaction={game.totalSatisfaction} manualClicks={game.manualClicks} inventory={game.inventory} achievementCount={achievementCount} achievementBonusPercent={Math.round((achievementMultiplier - 1) * 100)} clickPower={clickPower} perSecond={satisfactionPerSecond} nextGoal={nextGoal} luckyEventVisible={luckyEventVisible} activeBuffs={activeBuffs} chainRemaining={chainRemaining} clickCombo={game.clickCombo} selectedCharacterSkin={game.selectedCharacterSkin} selectedStageTheme={game.selectedStageTheme} onCharacterClick={handleCharacterClick} onLuckyEvent={handleLuckyEvent} onOpenAchievements={() => setAchievementsOpen(true)} onDialogue={playVoice} onPurchaseItem={(itemId) => handlePurchase(itemId, 1)} />
         <WorldPanel game={game} perSecond={satisfactionPerSecond} achievementMultiplier={achievementMultiplier} productionMultiplier={coreProductionMultiplier} season={season} onOpenStats={() => setStatsOpen(true)} onOpenPrestige={() => setPrestigeOpen(true)} onClaimOmen={() => { if (claimDailyOmen()) { playEffectSound('achievement'); showToast('本日のお告げを達成しました') } }} onSetWorshipPolicy={(policy) => { if (setWorshipPolicy(policy)) showToast('礼拝方針を変更しました') }} onSendSleepyChiruko={() => { if (sendSleepyChiruko()) showToast('ミニちる子を机のすみに寝かせました') }} onWakeSleepyChiruko={() => { const reward = wakeSleepyChiruko(); if (reward > 0) { playEffectSound('lucky'); showToast(`居眠りから${formatNumber(reward)}満足が戻りました`) } }} />
         <Shop game={game} lastPurchasedId={lastPurchasedId} achievementMultiplier={achievementMultiplier} productionMultiplier={coreProductionMultiplier} onPurchase={handlePurchase} onPurchaseUpgrade={handleUpgrade} />
       </main>
@@ -172,7 +191,7 @@ function App() {
       }} onOpenMemorial={(id) => { setAchievementsOpen(false); setActiveMemorialId(id) }} />}
       {statsOpen && <StatsModal game={game} clickPower={clickPower} perSecond={satisfactionPerSecond} onClose={() => setStatsOpen(false)} />}
       {prestigeOpen && <PrestigeModal game={game} onClose={() => setPrestigeOpen(false)} onPrestige={handlePrestige} onPurchaseDoctrine={handleDoctrine} />}
-      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整え、安全確認を解除して再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} />}
+      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整え、安全確認を解除して再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} onExportDiagnostics={exportDiagnostics} onClearDiagnostics={clearDiagnosticLogs} />}
       {activeMemorialId && (() => {
         const memorial = MEMORIALS.find((candidate) => candidate.id === activeMemorialId)
         if (!memorial) return null
