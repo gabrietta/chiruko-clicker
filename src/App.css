@@ -4050,3 +4050,10 @@
   .active-buff-stack .active-buff-banner { grid-template-columns: 25px minmax(0, 1fr); }
   .active-buff-stack .active-buff-banner > span { width: 24px; height: 24px; font-size: 11px; }
 }
+.tutorial-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+.tutorial-highlight { position: fixed; border: 3px solid #e3ad42; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(20,16,24,.42), 0 0 22px rgba(227,173,66,.8); pointer-events: none; transition: all .2s ease; }
+.tutorial-panel { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(360px, calc(100vw - 24px)); padding: 14px 16px; border: 2px solid #c28a28; border-radius: 12px; background: #fffdf4; color: #2b282e; box-shadow: 5px 5px 0 rgba(43,40,46,.18); pointer-events: auto; }
+.tutorial-panel p { margin: 6px 0 10px; font-weight: 700; }
+.tutorial-panel button { margin-right: 8px; padding: 7px 12px; border: 1px solid #c28a28; border-radius: 8px; background: #f7df9b; cursor: pointer; }
+.tutorial-panel .tutorial-skip { background: transparent; }
+@media (prefers-reduced-motion: reduce) { .tutorial-highlight { transition: none; } }

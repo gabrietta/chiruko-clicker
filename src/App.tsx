@@ -29,6 +29,8 @@ import { useGame } from './hooks/useGame'
 import { formatNumber } from './utils/format'
 import { clearDiagnosticLogs, diagnosticsFilename, logDiagnostic, makeDiagnostics } from './game/diagnostics'
 import { getSleepyChirukoSlots } from './game/calculations'
+import { TutorialOverlay } from './components/TutorialOverlay'
+import { shouldAutoStartTutorial } from './game/tutorial'
 
 function App() {
   const {
@@ -40,6 +42,7 @@ function App() {
   } = useGame()
   const { audioPreferences, updateAudioPreferences } = useAudioSettings()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [tutorialOpen, setTutorialOpen] = useState(() => shouldAutoStartTutorial(GAME_CONFIG.saveKey))
   const [achievementsOpen, setAchievementsOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
   const [prestigeOpen, setPrestigeOpen] = useState(false)
@@ -183,6 +186,7 @@ function App() {
 
       <footer className="status-footer"><span className="footer-seal" aria-hidden="true">満</span><span>満足教・ネオサイタマ仮設支部</span><span className="footer-divider" aria-hidden="true" /><span>{saveLabel}</span><span className="footer-divider" aria-hidden="true" /><span>{season.name}</span><span className="footer-spacer" /><span>累計 {formatNumber(game.totalSatisfaction)} 満足</span><span className="footer-divider" aria-hidden="true" /><button type="button" onClick={() => setStatsOpen(true)}>活動記録</button></footer>
 
+      {tutorialOpen && <TutorialOverlay manualClicks={game.manualClicks} onClose={() => setTutorialOpen(false)} />}
       {toast && <div className="purchase-toast" role="status"><span aria-hidden="true">✦</span> {toast}</div>}
       {latestAchievement && <button type="button" className="achievement-toast" onClick={() => { dismissLatestAchievement(); setAchievementsOpen(true) }} aria-label={`新しい実績「${latestAchievement.name}」。実績図鑑を開く`}><span className="toast-medal" aria-hidden="true">{latestAchievement.icon}</span><span><small>ACHIEVEMENT UNLOCKED</small><strong>{latestAchievement.name}</strong><em>{latestAchievement.flavor}</em></span></button>}
       {offlineReport && <OfflineModal report={offlineReport} onClose={dismissOfflineReport} />}
@@ -191,7 +195,7 @@ function App() {
       }} onOpenMemorial={(id) => { setAchievementsOpen(false); setActiveMemorialId(id) }} />}
       {statsOpen && <StatsModal game={game} clickPower={clickPower} perSecond={satisfactionPerSecond} onClose={() => setStatsOpen(false)} />}
       {prestigeOpen && <PrestigeModal game={game} onClose={() => setPrestigeOpen(false)} onPrestige={handlePrestige} onPurchaseDoctrine={handleDoctrine} />}
-      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整え、安全確認を解除して再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} onExportDiagnostics={exportDiagnostics} onClearDiagnostics={clearDiagnosticLogs} />}
+      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整え、安全確認を解除して再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} onExportDiagnostics={exportDiagnostics} onClearDiagnostics={clearDiagnosticLogs} onReplayTutorial={() => { setSettingsOpen(false); setTutorialOpen(true) }} />}
       {activeMemorialId && (() => {
         const memorial = MEMORIALS.find((candidate) => candidate.id === activeMemorialId)
         if (!memorial) return null

@@ -228,6 +228,7 @@ export const MainStage = ({
         <button
           type="button"
           className="character-button"
+          data-tutorial-target="chiruko"
           aria-label={`ちる子をさわる。${formatNumber(clickPower)}満足を獲得`}
           data-testid="chiruko-button"
           onPointerDown={(event) => {
@@ -300,6 +301,7 @@ export const MainStage = ({
         <div className="exact-satisfaction-anchor">
           <button
             className="next-goal-card current-satisfaction-card"
+            data-tutorial-target="satisfaction"
             type="button"
             aria-expanded={showExactSatisfaction}
             aria-label={showExactSatisfaction ? '満足数の詳細を閉じる' : '満足数の詳細を開く'}

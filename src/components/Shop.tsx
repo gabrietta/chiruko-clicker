@@ -84,7 +84,7 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
   return (
     <>
       <aside className="shop-panel" aria-labelledby="shop-title">
-        <div className="shop-heading">
+        <div className="shop-heading" data-tutorial-fallback="shop">
           <div><span className="shop-overline">SATISFACTION SUPPLY DEPOT</span><h2 id="shop-title">満足商店</h2><p>設備と、一度きりのありがたい御利益</p></div>
           <span className="shop-count">総設備 <b>{totalOwned}</b></span>
         </div>
@@ -112,6 +112,7 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
                   <article
                     className={`shop-item ${canBuy ? 'can-buy' : 'cannot-buy'} ${lastPurchasedId === item.id ? 'just-bought' : ''}`}
                     key={item.id}
+                    data-tutorial-target={index === 0 ? 'shop' : undefined}
                     onPointerEnter={(event) => { if (event.pointerType === 'mouse') showTooltip(item.id, event.currentTarget) }}
                     onPointerLeave={() => setTooltip((current) => current?.itemId === item.id ? null : current)}
                   >
