@@ -2,7 +2,7 @@ import { GAME_CONFIG, SHOP_ITEMS } from '../config/gameConfig'
 import type { SeasonDefinition } from '../config/seasons'
 import { getFacilityMilestoneMultiplier, getItemProductionMultiplier, getPrestigeGain, getVirtueMarkBonusPercent } from '../game/calculations'
 import type { GameState } from '../types/game'
-import { formatNumber } from '../utils/format'
+import { formatMultiplier, formatNumber } from '../utils/format'
 import { assetPath } from '../utils/assetPath'
 import { SideSystemsPanel } from './SideSystemsPanel'
 import type { WorshipPolicy } from '../types/game'
@@ -97,7 +97,7 @@ export const WorldPanel = ({ game, perSecond, achievementMultiplier, productionM
                     return (
                       <div className={`world-facility ${owned > 0 ? 'owned' : ''}`} key={item.id} title={item.name}>
                         <span aria-hidden="true">{item.imagePath ? <img src={assetPath(item.imagePath)} alt="" /> : item.icon}</span>
-                        <div><strong>{item.name}</strong><small>×{owned}{milestoneMultiplier > 1 ? `・効率×${milestoneMultiplier}` : ''}{unitRate > 0 && owned > 0 ? `・${formatNumber(unitRate * owned)}/秒` : ''}</small></div>
+                        <div><strong>{item.name}</strong><small>×{owned}{milestoneMultiplier > 1 ? `・効率×${formatMultiplier(milestoneMultiplier)}` : ''}{unitRate > 0 && owned > 0 ? `・${formatNumber(unitRate * owned)}/秒` : ''}</small></div>
                       </div>
                     )
                   })}

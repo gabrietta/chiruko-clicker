@@ -13,7 +13,7 @@ import {
   isUpgradeUnlocked,
 } from '../game/calculations'
 import type { GameState, ShopItemDefinition } from '../types/game'
-import { formatNumber } from '../utils/format'
+import { formatMultiplier, formatNumber } from '../utils/format'
 import { assetPath } from '../utils/assetPath'
 
 interface ShopProps {
@@ -119,11 +119,11 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
                     <span className="item-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                     <div className="item-icon" aria-hidden="true">{item.imagePath ? <img src={assetPath(item.imagePath)} alt="" /> : item.icon}</div>
                     <div className="item-details">
-                      <div className="item-title-line"><h3>{item.name}</h3><span className="owned-pill">× {owned}</span>{milestoneMultiplier > 1 && <span className="milestone-multiplier">×{milestoneMultiplier}</span>}</div>
+                      <div className="item-title-line"><h3>{item.name}</h3><span className="owned-pill">× {owned}</span>{milestoneMultiplier > 1 && <span className="milestone-multiplier">×{formatMultiplier(milestoneMultiplier)}</span>}</div>
                       <p className="item-description">{item.description}</p>
                       <div className="item-production-line"><span className="item-effect">{effectLabel}</span>{item.effectType === 'perSecond' && owned > 0 && <span className="item-total-output">計 +{formatNumber(item.effectValue * itemMultiplier * milestoneMultiplier * owned * achievementMultiplier * productionMultiplier)}/秒</span>}</div>
                       <button type="button" className="item-detail-button" onClick={(event) => { event.stopPropagation(); showTooltip(item.id, event.currentTarget.closest('.shop-item') as HTMLElement, true) }}>詳細</button>
-                      <span className={`milestone-progress ${nextMilestone ? '' : 'complete'}`}>{nextMilestone ? `あと${nextMilestone - owned}個で生産×${FACILITY_MILESTONE_MULTIPLIER}` : '節目ボーナス最大'}</span>
+                      <span className={`milestone-progress ${nextMilestone ? '' : 'complete'}`}>{nextMilestone ? `あと${nextMilestone - owned}個で生産×${formatMultiplier(FACILITY_MILESTONE_MULTIPLIER)}` : '節目ボーナス最大'}</span>
                     </div>
                     <button type="button" className="buy-button" disabled={!canBuy} onClick={() => { setTooltip(null); onPurchase(item.id, quantity) }} aria-label={`${item.name}を${quantity}個、${formatNumber(cost)}満足で購入`}>
                       <span>{canBuy ? `${quantity}個お迎え` : '不足'}</span><strong>{formatNumber(cost)}</strong>
@@ -202,7 +202,7 @@ const FacilityTooltip = ({ item, owned, unitEffect, ownedEffect, milestoneMultip
     <div className="facility-tooltip-effects">
       <p><span aria-hidden="true">●</span> 1個あたり{item.effectType === 'click' ? '、ひとさわり' : '毎秒'} <b>+{formatNumber(unitEffect)}</b> 満足</p>
       <p><span aria-hidden="true">●</span> 所有分の合計：<b>+{formatNumber(ownedEffect)}</b>{item.effectType === 'perSecond' ? ' / 秒' : ' / ひとさわり'}</p>
-      <p><span aria-hidden="true">●</span> 節目効率：<b>×{milestoneMultiplier}</b>{nextMilestone ? `（あと${nextMilestone - owned}個で×${FACILITY_MILESTONE_MULTIPLIER}）` : '（最大）'}</p>
+      <p><span aria-hidden="true">●</span> 節目効率：<b>×{formatMultiplier(milestoneMultiplier)}</b>{nextMilestone ? `（あと${nextMilestone - owned}個で×${formatMultiplier(FACILITY_MILESTONE_MULTIPLIER)}）` : '（最大）'}</p>
       <p><span aria-hidden="true">●</span> 適用中の御利益：<b>{upgradeNames.length > 0 ? upgradeNames.join('・') : 'なし'}</b></p>
     </div>
     <footer>実績・救済印・季節イベントなど、現在有効な倍率を含む表示です。</footer>

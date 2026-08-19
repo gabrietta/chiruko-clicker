@@ -28,6 +28,12 @@ import { logDiagnostic } from '../game/diagnostics'
 const randomBetween = (min: number, max: number) =>
   Math.round(min + Math.random() * (max - min))
 
+const isExpectedDelta = (previousValue: number, candidateValue: number, expectedDelta: number) => {
+  const actual = candidateValue - previousValue
+  const scale = Math.max(1, Math.abs(previousValue), Math.abs(candidateValue), Math.abs(expectedDelta), Math.abs(actual))
+  return Math.abs(actual - expectedDelta) <= Number.EPSILON * scale * 8
+}
+
 const getBuffMultiplier = (buffs: ActiveBuff[], target: 'click' | 'production') =>
   buffs.reduce((multiplier, buff) => (
     buff.expiresAt > Date.now() && (buff.kind === 'both' || buff.kind === target)
@@ -82,15 +88,14 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
     ? previous.sleepyBank / previous.sleepyChirukos
     : 0
   const sleepyWakeReward = sleepyShare * GAME_CONFIG.sleepyChiruko.wakeBonus
-  const sleepyWakeTolerance = Number.EPSILON * Math.max(1, Math.abs(sleepyShare), Math.abs(sleepyWakeReward)) * 32
   const isSleepyWake = previous.sleepyChirukos > 0 &&
     candidate.sleepyChirukos === previous.sleepyChirukos - 1 &&
     candidate.sleepyTotalWoken === previous.sleepyTotalWoken + 1 &&
     candidate.maxSleepyChirukos === previous.maxSleepyChirukos &&
-    Math.abs((previous.sleepyBank - candidate.sleepyBank) - sleepyShare) <= sleepyWakeTolerance &&
-    Math.abs((candidate.satisfaction - previous.satisfaction) - sleepyWakeReward) <= sleepyWakeTolerance &&
-    Math.abs((candidate.totalSatisfaction - previous.totalSatisfaction) - sleepyWakeReward) <= sleepyWakeTolerance &&
-    Math.abs((candidate.runSatisfaction - previous.runSatisfaction) - sleepyWakeReward) <= sleepyWakeTolerance
+    isExpectedDelta(candidate.sleepyBank, previous.sleepyBank, sleepyShare) &&
+    isExpectedDelta(previous.satisfaction, candidate.satisfaction, sleepyWakeReward) &&
+    isExpectedDelta(previous.totalSatisfaction, candidate.totalSatisfaction, sleepyWakeReward) &&
+    isExpectedDelta(previous.runSatisfaction, candidate.runSatisfaction, sleepyWakeReward)
   // 旧バージョンでは、奇跡報酬の累計だけ別の計算方法で保存された
   // セーブがありました。この値を今回の増加量と比較すると、再布教後の
   // 大きな救済印・連鎖報酬を正しく遊んでいる人まで誤検知します。

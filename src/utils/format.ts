@@ -38,3 +38,10 @@ export const formatDuration = (seconds: number) => {
   if (minutes > 0) return `${minutes}分`
   return `${Math.floor(seconds)}秒`
 }
+
+export const formatMultiplier = (value: number) => {
+  if (!Number.isFinite(value)) return '0'
+  const rounded = Math.round(value)
+  const normalized = Math.abs(value - rounded) < 0.05 ? rounded : Number(value.toFixed(2))
+  return String(normalized)
+}
