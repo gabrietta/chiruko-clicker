@@ -4001,6 +4001,149 @@
 .character-image.character-skin-read,
 .character-image.character-skin-run { width: 96%; }
 
+/* Readability pass: raise explanatory copy without scaling the whole interface. */
+.busy-edition .chiruko-quote {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.busy-edition .news-window p {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.busy-edition .side-system-description {
+  min-height: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.busy-edition .side-system-meta {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.busy-edition .side-system-meta em {
+  white-space: normal;
+}
+
+.busy-edition .side-system-action {
+  min-height: 31px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.busy-edition .policy-options strong {
+  font-size: 11px;
+}
+
+.busy-edition .policy-options span,
+.busy-edition .side-system-flavor {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.busy-edition .season-banner p,
+.busy-edition .lane-label span {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.busy-edition .season-banner > div {
+  min-width: 0;
+}
+
+.busy-edition .season-banner p {
+  overflow-wrap: anywhere;
+}
+
+.busy-edition .three-panel-grid .item-description {
+  min-height: 2.9em;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.busy-edition .three-panel-grid .item-effect,
+.busy-edition .three-panel-grid .item-total-output,
+.busy-edition .milestone-progress {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.busy-edition .three-panel-grid .buy-button span,
+.busy-edition .three-panel-grid .buy-button strong {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.busy-edition .upgrade-card p,
+.busy-edition .upgrade-card em,
+.busy-edition .upgrade-card button {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.busy-edition .quantity-selector span,
+.busy-edition .quantity-selector button {
+  font-size: 11px;
+}
+
+.busy-edition .settings-section > span,
+.busy-edition .settings-section-title span,
+.busy-edition .save-transfer-section p,
+.busy-edition .audio-toggle > span small,
+.busy-edition .volume-control > span {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.busy-edition .save-transfer-section textarea {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.busy-edition .facility-tooltip-effects p,
+.busy-edition .facility-tooltip footer {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.busy-edition .tutorial-panel p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 620px) {
+  .busy-edition .chiruko-quote {
+    width: 42%;
+    padding: 8px 9px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .busy-edition .news-window p {
+    font-size: 11px;
+  }
+
+  .busy-edition .three-panel-grid .item-description {
+    min-height: 2.9em;
+    font-size: 12px;
+  }
+
+  .busy-edition .three-panel-grid .item-effect,
+  .busy-edition .milestone-progress {
+    font-size: 11px;
+  }
+
+  .busy-edition .side-system-meta {
+    flex-wrap: wrap;
+  }
+}
+
 @media (max-width: 850px) {
   .cosmetic-groups { grid-template-columns: 1fr; }
   .virtue-rewards { max-height: 250px; overflow-y: auto; }
