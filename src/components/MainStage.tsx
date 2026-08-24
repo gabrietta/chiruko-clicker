@@ -71,7 +71,7 @@ export const MainStage = ({
   onPurchaseItem,
 }: MainStageProps) => {
   const zoneRef = useRef<HTMLDivElement>(null)
-  const imageRef = useRef<HTMLImageElement>(null)
+  const characterButtonRef = useRef<HTMLButtonElement>(null)
   const effectId = useRef(0)
   const [gains, setGains] = useState<GainEffect[]>([])
   const [particles, setParticles] = useState<EffectParticle[]>([])
@@ -89,6 +89,11 @@ export const MainStage = ({
         ? GAME_CONFIG.characterImages.smile
         : characterSkin.imagePath
     : characterSkin.imagePath
+  const alternateCharacterImagePath = selectedCharacterSkin === 'read'
+    ? '/assets/characters/chiruko-read-lookdown.png'
+    : selectedCharacterSkin === 'run'
+      ? '/assets/characters/chiruko-run-blink.png'
+      : null
 
   const triggerSmile = useCallback((durationMs = 1_800, variant?: Exclude<ChirukoExpression, 'normal'>) => {
     if (selectedCharacterSkin !== 'sit') return
@@ -178,15 +183,17 @@ export const MainStage = ({
       setParticles((current) => current.filter((particle) => Math.floor(particle.id / 10) !== id))
     }, 900)
 
-    imageRef.current?.animate(
-      [
-        { transform: 'scale(1)' },
-        { transform: 'scale(0.955) rotate(-1deg)', offset: 0.35 },
-        { transform: 'scale(1.035) rotate(1deg)', offset: 0.7 },
-        { transform: 'scale(1)' },
-      ],
-      { duration: 210, easing: 'cubic-bezier(.2,.8,.3,1)' },
-    )
+    characterButtonRef.current?.querySelectorAll<HTMLImageElement>('.character-image').forEach((image) => {
+      image.animate(
+        [
+          { transform: 'scale(1)' },
+          { transform: 'scale(0.955) rotate(-1deg)', offset: 0.35 },
+          { transform: 'scale(1.035) rotate(1deg)', offset: 0.7 },
+          { transform: 'scale(1)' },
+        ],
+        { duration: 210, easing: 'cubic-bezier(.2,.8,.3,1)' },
+      )
+    })
   }
 
   const centerPoint = () => {
@@ -228,6 +235,7 @@ export const MainStage = ({
         <button
           type="button"
           className="character-button"
+          ref={characterButtonRef}
           data-tutorial-target="chiruko"
           aria-label={`ちる子をさわる。${formatNumber(clickPower)}満足を獲得`}
           data-testid="chiruko-button"
@@ -245,13 +253,22 @@ export const MainStage = ({
         >
           <span className="character-halo" aria-hidden="true" />
           <img
-            ref={imageRef}
             className={`character-image character-skin-${characterSkin.id}`}
             src={assetPath(characterImagePath)}
             alt={`${characterSkin.name}の残念院ちる子`}
             data-expression={expression}
             draggable="false"
           />
+          {alternateCharacterImagePath && (
+            <img
+              className={`character-image character-image-alt character-skin-${characterSkin.id}`}
+              src={assetPath(alternateCharacterImagePath)}
+              alt=""
+              aria-hidden="true"
+              draggable="false"
+            />
+          )}
+          {selectedCharacterSkin === 'sleep' && <span className="sleep-breath" aria-hidden="true">すぅ…</span>}
         </button>
 
         {manualClicks === 0 && <div className="tap-hint" aria-hidden="true">♡ クリック / タップ</div>}

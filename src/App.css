@@ -4001,6 +4001,63 @@
 .character-image.character-skin-read,
 .character-image.character-skin-run { width: 96%; }
 
+/* Main-character frame differences: preserve the base image and crossfade only the eyes. */
+.character-button .character-image {
+  grid-area: 1 / 1;
+}
+
+.character-button .character-image-alt {
+  opacity: 0;
+}
+
+@keyframes characterReadLookdown {
+  0%, 37% { opacity: 0; }
+  47%, 60% { opacity: 1; }
+  70%, 100% { opacity: 0; }
+}
+
+@keyframes characterRunBlink {
+  0%, 47% { opacity: 0; }
+  48.5%, 51.5% { opacity: 1; }
+  53%, 100% { opacity: 0; }
+}
+
+.character-button .character-image-alt.character-skin-read {
+  animation: characterReadLookdown 6s ease-in-out infinite;
+}
+
+.character-button .character-image-alt.character-skin-run {
+  animation: characterRunBlink 4s linear infinite;
+}
+
+.sleep-breath {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 27%;
+  color: rgba(184, 79, 118, .78);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(35px);
+  animation: sleepyBreath 4.2s ease-in-out infinite;
+}
+
+@keyframes sleepyBreath {
+  0%, 100% { opacity: 0; transform: translate(35px, 2px); }
+  35%, 55% { opacity: .8; transform: translate(35px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-button .character-image-alt,
+  .character-button .sleep-breath {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* Readability pass: raise explanatory copy without scaling the whole interface. */
 .busy-edition .chiruko-quote {
   font-size: 12px;
