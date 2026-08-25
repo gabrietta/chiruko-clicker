@@ -29,8 +29,9 @@ const LANE_GROUPS = [
   { label: '夜更けの布教街', scenery: '巨大像・湯気・放送電波', ids: ['giant-statue', 'ramen-sanctum', 'cult-broadcast'], tone: 'city' },
   { label: 'ネオ大聖域', scenery: '世界の境界はここから', ids: ['neo-cathedral', 'dimension-gate'], tone: 'cathedral' },
   { label: '銀河満足航路', scenery: '布教船の先にある架空の未来', ids: ['cosmic-chiruko', 'sora-3'], tone: 'cosmos' },
-  { label: '満足宇宙開発区', scenery: '星を観測し、銀河へ満足を届ける', ids: ['satisfaction-observatory', 'galaxy-mission-fleet'], tone: 'cosmos' },
-  { label: '終端世界', scenery: '宇宙を演算し、夢想圏へ', ids: ['satisfaction-simulator', 'sora-4'], tone: 'cathedral' },
+  { label: '満足宇宙開発区', scenery: '星を観測し、銀河へ満足を届ける', ids: ['satisfaction-observatory', 'stellar-satisfaction-relay', 'galaxy-mission-fleet'], tone: 'cosmos' },
+  { label: '終端世界', scenery: '宇宙を演算し、夢想圏へ', ids: ['galactic-salvation-reactor', 'satisfaction-simulator'], tone: 'cathedral' },
+  { label: '夢想現実境界', scenery: '計算された満足が、現実へこぼれ出す', ids: ['satisfaction-reality-converter', 'sora-4'], tone: 'cosmos' },
 ]
 
 const DISPLAY_COUNT_THRESHOLDS = [1, 2, 3, 4, 5, 7, 10, 15, 25, 50, 100, 250]

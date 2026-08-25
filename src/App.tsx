@@ -30,6 +30,7 @@ import { formatNumber } from './utils/format'
 import { clearDiagnosticLogs, diagnosticsFilename, logDiagnostic, makeDiagnostics } from './game/diagnostics'
 import { getSleepyChirukoSlots } from './game/calculations'
 import { TutorialOverlay } from './components/TutorialOverlay'
+import { ChangelogModal } from './components/ChangelogModal'
 import { shouldAutoStartTutorial } from './game/tutorial'
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
   const [achievementsOpen, setAchievementsOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
   const [prestigeOpen, setPrestigeOpen] = useState(false)
+  const [changelogOpen, setChangelogOpen] = useState(false)
   const [activeMemorialId, setActiveMemorialId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [lastPurchasedId, setLastPurchasedId] = useState<string | null>(null)
@@ -195,7 +197,8 @@ function App() {
       }} onOpenMemorial={(id) => { setAchievementsOpen(false); setActiveMemorialId(id) }} />}
       {statsOpen && <StatsModal game={game} clickPower={clickPower} perSecond={satisfactionPerSecond} onClose={() => setStatsOpen(false)} />}
       {prestigeOpen && <PrestigeModal game={game} onClose={() => setPrestigeOpen(false)} onPrestige={handlePrestige} onPurchaseDoctrine={handleDoctrine} />}
-      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整え、安全確認を解除して再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} onExportDiagnostics={exportDiagnostics} onClearDiagnostics={clearDiagnosticLogs} onReplayTutorial={() => { setSettingsOpen(false); setTutorialOpen(true) }} />}
+      {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整え、安全確認を解除して再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} onExportDiagnostics={exportDiagnostics} onClearDiagnostics={clearDiagnosticLogs} onReplayTutorial={() => { setSettingsOpen(false); setTutorialOpen(true) }} onOpenChangelog={() => { setSettingsOpen(false); setChangelogOpen(true) }} />}
+      {changelogOpen && <ChangelogModal onClose={() => setChangelogOpen(false)} />}
       {activeMemorialId && (() => {
         const memorial = MEMORIALS.find((candidate) => candidate.id === activeMemorialId)
         if (!memorial) return null

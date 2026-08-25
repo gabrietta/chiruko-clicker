@@ -4163,6 +4163,55 @@
   line-height: 1.5;
 }
 
+.changelog-setting {
+  display: grid;
+  gap: 5px;
+}
+
+.changelog-setting span {
+  color: #8d838a;
+}
+
+.changelog-setting .secondary-button {
+  justify-self: start;
+}
+
+.changelog-modal {
+  width: min(100%, 560px);
+}
+
+.changelog-list {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 17px;
+}
+
+.changelog-entry {
+  padding: 10px 12px;
+  border: 1px solid #e4dadd;
+  background: #faf7f8;
+}
+
+.changelog-entry time {
+  color: #a16f20;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.changelog-entry h3 {
+  margin: 2px 0 4px;
+  color: #342e34;
+  font-size: 14px;
+}
+
+.changelog-entry ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #70666d;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .busy-edition .facility-tooltip-effects p,
 .busy-edition .facility-tooltip footer {
   font-size: 12px;
