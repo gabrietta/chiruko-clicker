@@ -82,6 +82,16 @@ export const MainStage = ({
   const smileTimeoutRef = useRef<number | null>(null)
   const characterSkin = CHARACTER_SKINS.find((skin) => skin.id === selectedCharacterSkin) ??
     CHARACTER_SKINS[0]
+
+  useEffect(() => {
+    if (!showExactSatisfaction) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowExactSatisfaction(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [showExactSatisfaction])
+
   const characterImagePath = selectedCharacterSkin === 'sit'
     ? expression === 'nikoniko'
       ? GAME_CONFIG.characterImages.nikoniko
@@ -330,7 +340,23 @@ export const MainStage = ({
             <em>{nextGoal ? `次：${nextGoal.item.name}まで ${formatNumber(Math.max(0, nextGoal.cost - satisfaction))}` : `累計 ${formatNumber(totalSatisfaction)} 満足`}</em>
           </button>
           {showExactSatisfaction && (
-            <div className="satisfaction-detail-popover" role="status" aria-live="polite">
+            <div
+              className="satisfaction-detail-popover"
+              role="status"
+              aria-live="polite"
+              onClick={() => setShowExactSatisfaction(false)}
+            >
+              <button
+                className="satisfaction-detail-close"
+                type="button"
+                aria-label="満足数の詳細を閉じる"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setShowExactSatisfaction(false)
+                }}
+              >
+                ×
+              </button>
               <small>REAL-TIME SATISFACTION</small>
               <strong>{formatDetailedNumber(satisfaction)} 満足</strong>
               <span>毎秒 +{formatDetailedNumber(perSecond)} 満足</span>

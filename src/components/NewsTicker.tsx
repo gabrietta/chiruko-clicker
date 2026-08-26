@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import type { GameState } from '../types/game'
 import { getActiveSeason } from '../config/seasons'
 import { formatNumber } from '../utils/format'
@@ -10,6 +11,10 @@ interface NewsTickerProps {
 
 export const NewsTicker = ({ game, perSecond }: NewsTickerProps) => {
   const [messageIndex, setMessageIndex] = useState(0)
+  const newsWindowRef = useRef<HTMLDivElement>(null)
+  const [isMarquee, setIsMarquee] = useState(false)
+  const [marqueeDistance, setMarqueeDistance] = useState(0)
+  const [marqueeDuration, setMarqueeDuration] = useState(8)
 
   const messages = useMemo(() => {
     const result = [
@@ -18,6 +23,13 @@ export const NewsTicker = ({ game, perSecond }: NewsTickerProps) => {
       'ネオサイタマ支部、ヤンヤンつけボーを暫定的な聖菓に認定。',
       '教祖の年齢は本日も自称17歳。関係者は静かにうなずく。',
       '速報：魅力的なおでこへの過度な連打に注意喚起。',
+      '満足は、今日も静かに増えています。',
+      '終盤の設備が拡張され、銀河への道のりに新しい中継地点が生まれました。',
+      '設定画面に更新履歴を追加。満足教の歩みをいつでも確認できます。',
+      'ちる子スキンに、表情差分と寝息の小さな変化が加わりました。',
+      '居眠りミニちる子の起床処理を見直しました。預かった満足は、今日も静かに戻ります。',
+      '診断データの書き出しに対応。困ったときは設定から記録を持ち出せます。',
+      'はじめての方へ。まずはちる子をひとさわり、次に商店を覗きましょう。',
     ]
 
     if (game.manualClicks >= 50) result.push(`市民、教祖をすでに${formatNumber(game.manualClicks)}回なでたと供述。`)
@@ -33,6 +45,9 @@ export const NewsTicker = ({ game, perSecond }: NewsTickerProps) => {
     if ((game.inventory['dimension-gate'] ?? 0) > 0) result.push('次元ゲートの向こうから「こちらはもう満足です」との通信。')
     if ((game.inventory['cosmic-chiruko'] ?? 0) > 0) result.push('宇宙ちる子布教船が出航。帰還予定は教義と同じく未定。')
     if ((game.inventory['sora-3'] ?? 0) > 0) result.push('架空のSora3、布教映像から布教世界そのものを生成したとの未確認情報。')
+    if ((game.inventory['stellar-satisfaction-relay'] ?? 0) > 0) result.push('星間満足中継局、天文台で見つけた光を銀河のすみずみへ中継中。')
+    if ((game.inventory['galactic-salvation-reactor'] ?? 0) > 0) result.push('銀河救済演算炉、艦隊の満足を次の宇宙の計算へ変換。')
+    if ((game.inventory['satisfaction-reality-converter'] ?? 0) > 0) result.push('満足現実変換機、計算された満足世界を少しずつ現実へ出力。')
     if (game.luckyEventsClicked > 0) result.push(`きらめく「救済の欠片」、これまでに${game.luckyEventsClicked}回確保。`)
     if (game.purchasedUpgradeIds.length > 0) result.push(`御利益の授与、累計${game.purchasedUpgradeIds.length}件。ありがたさの測定は難航。`)
     if (game.prestigeCount > 0) result.push(`満足世界、これまでに${game.prestigeCount}回再構築。住民は「前より速い」と証言。`)
@@ -40,19 +55,47 @@ export const NewsTicker = ({ game, perSecond }: NewsTickerProps) => {
     return result
   }, [game.inventory, game.luckyEventsClicked, game.manualClicks, game.prestigeCount, game.purchasedUpgradeIds.length, perSecond])
 
+  useLayoutEffect(() => {
+    const element = newsWindowRef.current
+    if (!element) return
+
+    const measure = () => {
+      const paragraph = element.querySelector('p')
+      if (!paragraph) return
+      const distance = Math.max(0, paragraph.scrollWidth - element.clientWidth)
+      setMarqueeDistance(distance)
+      setIsMarquee(distance > 1)
+      setMarqueeDuration(Math.min(18, Math.max(7, 5 + distance / 42)))
+    }
+
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [messageIndex, messages])
+
   useEffect(() => {
-    const timer = window.setInterval(
-      () => setMessageIndex((current) => current + 1),
-      7_500,
+    const displayDuration = isMarquee ? marqueeDuration * 1_000 : 7_500
+    const timer = window.setTimeout(
+      () => setMessageIndex((current) => (current + 1) % messages.length),
+      displayDuration,
     )
-    return () => window.clearInterval(timer)
-  }, [])
+    return () => window.clearTimeout(timer)
+  }, [isMarquee, marqueeDuration, messageIndex, messages.length])
 
   return (
     <div className="news-ticker" aria-live="polite">
       <span className="news-label"><i aria-hidden="true" /> 満足通信</span>
-      <div className="news-window">
-        <p key={messageIndex}>{messages[messageIndex % messages.length]}</p>
+      <div className="news-window" ref={newsWindowRef}>
+        <p
+          key={messageIndex}
+          className={isMarquee ? 'is-marquee' : undefined}
+          style={isMarquee ? {
+            '--news-distance': `${marqueeDistance}px`,
+            '--news-duration': `${marqueeDuration}s`,
+          } as CSSProperties : undefined}
+          title={isMarquee ? messages[messageIndex % messages.length] : undefined}
+        >{messages[messageIndex % messages.length]}</p>
       </div>
       <span className="news-code">MSK-7144</span>
     </div>
