@@ -18,6 +18,8 @@ interface PrestigeModalProps {
 export const PrestigeModal = ({ game, onClose, onPrestige, onPurchaseDoctrine }: PrestigeModalProps) => {
   const gain = getPrestigeGain(game.runSatisfaction)
   const virtueBonusPercent = getVirtueMarkBonusPercent(game.virtueMarks)
+  const afterVirtueBonusPercent = getVirtueMarkBonusPercent(game.virtueMarks + gain)
+  const virtueBonusDelta = afterVirtueBonusPercent - virtueBonusPercent
   const spentMarks = getSpentVirtueMarks(game.purchasedDoctrineIds)
   const availableMarks = game.virtueMarks - spentMarks
   return (
@@ -31,7 +33,12 @@ export const PrestigeModal = ({ game, onClose, onPrestige, onPurchaseDoctrine }:
           <span>今回の満足</span><strong>{formatNumber(game.runSatisfaction)}</strong>
           <i>→</i><span>獲得できる救済印</span><strong>+{gain}</strong>
         </div>
-        <p className="prestige-note">救済印による永久補正は、印が増えるほど緩やかに伸びます。現在はひとさわりと自動生産が+{virtueBonusPercent}%強化されています。</p>
+        <p className="prestige-prediction" aria-label={`永久強化は現在プラス${virtueBonusPercent}パーセント、再布教後プラス${afterVirtueBonusPercent}パーセント、今回プラス${virtueBonusDelta}パーセントです`}>
+          <span>永久強化</span>
+          <strong>+{virtueBonusPercent}% → +{afterVirtueBonusPercent}%</strong>
+          <em>今回 +{virtueBonusDelta}%</em>
+        </p>
+        <p className="prestige-note">救済印による永久補正は、印が増えるほど緩やかに伸びます。ひとさわりと自動生産の両方に適用されます。</p>
         {gain <= 0 && <p className="prestige-warning">最初の再布教には今回の周回で累計{formatNumber(GAME_CONFIG.prestigeBaseRequirement)}満足が必要です。</p>}
 
         <section className="doctrine-section" aria-labelledby="doctrine-title">

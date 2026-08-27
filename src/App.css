@@ -3437,6 +3437,21 @@
 .prestige-reward span { color: #bfb5bc; font-size: 8px; }
 .prestige-reward strong { color: #efc765; font-size: 18px; }
 .prestige-reward i { color: #b84f76; font-style: normal; }
+.prestige-prediction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px 10px;
+  margin: 10px 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(194, 138, 40, .45);
+  color: #77591f;
+  background: #fff8df;
+}
+.prestige-prediction span { font-size: 10px; font-weight: 800; }
+.prestige-prediction strong { color: #9b3e61; font-size: 16px; }
+.prestige-prediction em { font-size: 10px; font-style: normal; font-weight: 800; }
 .prestige-note { padding: 8px; border: 1px dashed #c28a28; color: #77591f !important; background: #fff8df; }
 .prestige-warning { color: #ad465b !important; font-weight: 800; }
 .prestige-button { padding: 10px 16px; border: 1px solid #d1a649; border-radius: 12px; color: #f2cc72; background: #2b282e; font-weight: 900; cursor: pointer; }
