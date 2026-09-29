@@ -58,6 +58,8 @@ export const getAchievementProgress = (
       return game.sleepyTotalWoken
     case 'maxSleepyChirukos':
       return game.maxSleepyChirukos
+    case 'researchCompleted':
+      return game.researchCompleted
   }
 }
 

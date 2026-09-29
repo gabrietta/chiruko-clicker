@@ -7,7 +7,8 @@ import { MEMORIALS } from '../config/memorials'
 import { getDailyOmen, getDailyOmenDateKey } from '../config/omens'
 import { isWorshipPolicy } from '../config/worshipPolicies'
 import type { GameState, OfflineReport } from '../types/game'
-import { getSatisfactionPerSecond, getSleepyBankCap } from './calculations'
+import { getResearchAdjustedOfflineCap, getSatisfactionPerSecond, getSleepyBankCap } from './calculations'
+import { normalizeResearch } from './research'
 
 const createInventory = () =>
   Object.fromEntries(SHOP_ITEMS.map((item) => [item.id, 0]))
@@ -56,6 +57,10 @@ export const createInitialGame = (): GameState => ({
   lastPlayedAt: Date.now(),
   anomalyFrozen: false,
   anomalyReason: '',
+  researchUnlocked: false,
+  researchLevels: [0, 0, 0],
+  researchCompleted: 0,
+  researchProject: null,
 })
 
 const finiteOr = (value: unknown, fallback: number) =>
@@ -144,6 +149,7 @@ export const decodeSaveData = (code: string): GameState => {
     // them. Imported saves always resume without losing progression.
     anomalyFrozen: false,
     anomalyReason: '',
+    ...normalizeResearch(parsed, (Array.isArray(parsed.unlockedAchievementIds) && parsed.unlockedAchievementIds.includes('sora-4-50')) || inventory['sora-4'] >= 50),
   }
   return imported
 }
@@ -190,6 +196,9 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
         (id): id is string => typeof id === 'string' && knownDoctrineIds.has(id),
       )
       : []
+    const normalizedResearch = normalizeResearch(parsed, (
+      Array.isArray(parsed.unlockedAchievementIds) && parsed.unlockedAchievementIds.includes('sora-4-50')
+    ) || (inventory['sora-4'] ?? 0) >= 50)
 
     const knownCharacterSkins = new Set(
       ALL_COSMETICS.filter((cosmetic) => cosmetic.kind === 'character').map((cosmetic) => cosmetic.id),
@@ -217,9 +226,11 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
       virtueMarks,
       purchasedDoctrineIds,
       worshipPolicy,
+      normalizedResearch.researchLevels,
     )
     const offlineCapMultiplier = getDoctrineEffect(purchasedDoctrineIds, 'offlineCapMultiplier')
-    const adjustedElapsedSeconds = Math.min(rawElapsed, GAME_CONFIG.maxOfflineSeconds * offlineCapMultiplier)
+    const adjustedOfflineCap = getResearchAdjustedOfflineCap(GAME_CONFIG.maxOfflineSeconds * offlineCapMultiplier, normalizedResearch.researchLevels)
+    const adjustedElapsedSeconds = Math.min(rawElapsed, adjustedOfflineCap)
     const earned = perSecond * adjustedElapsedSeconds
     const savedSleepyBank = finiteOr(parsed.sleepyBank, 0)
     const sleepyChirukos = Math.min(3, Math.floor(finiteOr(parsed.sleepyChirukos, 0)))
@@ -285,12 +296,13 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
         // Existing stopped saves are automatically resumed on every load.
         anomalyFrozen: false,
         anomalyReason: '',
+        ...normalizedResearch,
       },
       offlineReport: rawElapsed >= 10 && earned >= 1
         ? {
           elapsedSeconds: adjustedElapsedSeconds,
           earned,
-          wasCapped: rawElapsed > GAME_CONFIG.maxOfflineSeconds * offlineCapMultiplier,
+          wasCapped: rawElapsed > adjustedOfflineCap,
         }
         : null,
     }

@@ -4,6 +4,7 @@ import { UPGRADES } from '../config/upgrades'
 import { getDoctrineEffect } from '../config/doctrines'
 import { getWorshipPolicy } from '../config/worshipPolicies'
 import type { GameState, ShopItemDefinition, WorshipPolicy } from '../types/game'
+import { getResearchClickMultiplier, getResearchOfflineSeconds, getResearchProductionMultiplier } from './research'
 
 export const getItemCost = (item: ShopItemDefinition, owned: number) =>
   Math.ceil(item.baseCost * item.costGrowth ** owned)
@@ -78,6 +79,7 @@ export const getClickPower = (
   virtueMarks = 0,
   purchasedDoctrineIds: string[] = [],
   worshipPolicy: WorshipPolicy = 'balanced',
+  researchLevels: readonly number[] = [],
 ) => {
   const base = 1 + SHOP_ITEMS.reduce((total, item) => {
     if (item.effectType !== 'click') return total
@@ -88,6 +90,7 @@ export const getClickPower = (
   return base *
     getUpgradeMultiplier(purchasedUpgradeIds, 'clickMultiplier') *
     getDoctrineEffect(purchasedDoctrineIds, 'clickMultiplier') *
+    getResearchClickMultiplier(researchLevels) *
     prestigeMultiplier *
     getActiveSeason().clickMultiplier *
     getWorshipPolicy(worshipPolicy).clickMultiplier
@@ -119,12 +122,14 @@ export const getSatisfactionPerSecond = (
   virtueMarks = 0,
   purchasedDoctrineIds: string[] = [],
   worshipPolicy: WorshipPolicy = 'balanced',
+  researchLevels: readonly number[] = [],
 ) => {
   const prestigeMultiplier = getVirtueMarkMultiplier(virtueMarks)
   return getBaseSatisfactionPerSecond(inventory, purchasedUpgradeIds) *
     getAchievementMultiplier(achievementCount, purchasedDoctrineIds) *
     getGlobalProductionUpgradeMultiplier(purchasedUpgradeIds) *
     getDoctrineEffect(purchasedDoctrineIds, 'productionMultiplier') *
+    getResearchProductionMultiplier(researchLevels) *
     prestigeMultiplier *
     getActiveSeason().productionMultiplier *
     getWorshipPolicy(worshipPolicy).productionMultiplier
@@ -144,3 +149,6 @@ export const isUpgradeUnlocked = (game: GameState, upgradeId: string) => {
 
 export const getTotalOwned = (inventory: Record<string, number>) =>
   Object.values(inventory).reduce((total, count) => total + count, 0)
+
+export const getResearchAdjustedOfflineCap = (baseSeconds: number, levels: readonly number[]) =>
+  Math.max(0, baseSeconds + getResearchOfflineSeconds(levels))

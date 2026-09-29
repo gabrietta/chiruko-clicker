@@ -31,7 +31,9 @@ import { clearDiagnosticLogs, diagnosticsFilename, logDiagnostic, makeDiagnostic
 import { getSleepyChirukoSlots } from './game/calculations'
 import { TutorialOverlay } from './components/TutorialOverlay'
 import { ChangelogModal } from './components/ChangelogModal'
+import { ResearchModal } from './components/ResearchModal'
 import { shouldAutoStartTutorial } from './game/tutorial'
+import { getResearchProductionMultiplier } from './game/research'
 
 function App() {
   const {
@@ -39,7 +41,7 @@ function App() {
     luckyEventVisible, activeBuffs, chainRemaining, clickCharacter, purchaseItem, purchaseUpgrade,
     purchaseDoctrine, selectCosmetic, claimLuckyEvent, prestige, dismissOfflineReport,
     dismissLatestAchievement, markMemorialViewed, resetGame, resumeFromAnomaly, exportSave, importSave,
-    claimDailyOmen, setWorshipPolicy, sendSleepyChiruko, wakeSleepyChiruko,
+    claimDailyOmen, setWorshipPolicy, sendSleepyChiruko, wakeSleepyChiruko, startResearch, claimResearch,
   } = useGame()
   const { audioPreferences, updateAudioPreferences } = useAudioSettings()
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -48,6 +50,7 @@ function App() {
   const [statsOpen, setStatsOpen] = useState(false)
   const [prestigeOpen, setPrestigeOpen] = useState(false)
   const [changelogOpen, setChangelogOpen] = useState(false)
+  const [researchOpen, setResearchOpen] = useState(false)
   const [activeMemorialId, setActiveMemorialId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [lastPurchasedId, setLastPurchasedId] = useState<string | null>(null)
@@ -153,6 +156,7 @@ function App() {
     getVirtueMarkMultiplier(game.virtueMarks) *
     getDoctrineEffect(game.purchasedDoctrineIds, 'productionMultiplier') *
     getGlobalProductionUpgradeMultiplier(game.purchasedUpgradeIds) *
+    getResearchProductionMultiplier(game.researchLevels) *
     getWorshipPolicy(game.worshipPolicy).productionMultiplier
 
   return (
@@ -161,12 +165,14 @@ function App() {
         <div className="brand-lockup" aria-label={GAME_CONFIG.title}><span className="brand-mark" aria-hidden="true">✦</span><div><p className="brand-kicker">ZANNEN-IN CHIRUKO · SATISFACTION CULT</p><h1>{GAME_CONFIG.title}</h1></div></div>
         <div className="header-actions">
           <button className="achievement-header-button" type="button" onClick={() => setAchievementsOpen(true)} aria-label={`実績図鑑を開く。${achievementCount}/${ACHIEVEMENTS.length}解除済み`}><span className="achievement-ring" style={{ '--progress': `${achievementPercent * 3.6}deg` } as React.CSSProperties}><b aria-hidden="true">杯</b></span><span><small>実績</small><strong>{achievementCount}/{ACHIEVEMENTS.length}</strong></span></button>
+          <button className="research-header-button" type="button" onClick={() => setResearchOpen(true)} aria-label="満足宇宙研究所を開く">研究所 {game.researchProject ? game.researchProject.finishAt <= Date.now() ? '受取可 ✦' : '研究中' : game.researchUnlocked || (game.inventory['sora-4'] ?? 0) >= 50 ? `${game.researchCompleted}/12` : `Sora4 ${game.inventory['sora-4'] ?? 0}/50`}</button>
           <button className="sound-quick-button" type="button" onClick={() => updateAudioPreferences({ masterEnabled: !audioPreferences.masterEnabled })} aria-label={audioPreferences.masterEnabled ? 'すべての音を消す' : '音を有効にする'} title={audioPreferences.masterEnabled ? '音あり' : 'ミュート'}>{audioPreferences.masterEnabled ? '♪' : '×'}</button>
           <button className="icon-button" type="button" onClick={() => setSettingsOpen(true)} aria-label="設定を開く" title="設定"><span aria-hidden="true">⚙</span></button>
         </div>
       </header>
 
       <NewsTicker game={game} perSecond={satisfactionPerSecond} />
+      {luckyEventVisible && !settingsOpen && !researchOpen && !achievementsOpen && !statsOpen && !prestigeOpen && !changelogOpen && !tutorialOpen && !offlineReport && !activeMemorialId && <button className="mobile-lucky-banner" type="button" onClick={handleLuckyEvent}><span aria-hidden="true">✦</span> 欠片出現・タップで回収</button>}
 
       {game.anomalyFrozen && (
         <aside className="anomaly-warning" role="alert">
@@ -199,6 +205,7 @@ function App() {
       {prestigeOpen && <PrestigeModal game={game} onClose={() => setPrestigeOpen(false)} onPrestige={handlePrestige} onPurchaseDoctrine={handleDoctrine} />}
       {settingsOpen && <SettingsModal audioPreferences={audioPreferences} onUpdateAudio={updateAudioPreferences} onClose={() => setSettingsOpen(false)} onReset={() => { resetGame(); setSettingsOpen(false); showToast('セーブデータを初期化しました') }} anomalyFrozen={game.anomalyFrozen} anomalyReason={game.anomalyReason} onResumeAnomaly={() => { const resumed = resumeFromAnomaly(); if (resumed) { setSettingsOpen(false); showToast('履歴を整え、安全確認を解除して再開しました') }; return resumed }} onExportSave={exportSave} onImportSave={importSave} onExportDiagnostics={exportDiagnostics} onClearDiagnostics={clearDiagnosticLogs} onReplayTutorial={() => { setSettingsOpen(false); setTutorialOpen(true) }} onOpenChangelog={() => { setSettingsOpen(false); setChangelogOpen(true) }} />}
       {changelogOpen && <ChangelogModal onClose={() => setChangelogOpen(false)} />}
+      {researchOpen && <ResearchModal game={game} onClose={() => setResearchOpen(false)} onStart={(branch) => { if (startResearch(branch)) showToast('研究を開始しました') }} onClaim={() => { if (claimResearch()) showToast('研究成果を受け取りました') }} />}
       {activeMemorialId && (() => {
         const memorial = MEMORIALS.find((candidate) => candidate.id === activeMemorialId)
         if (!memorial) return null

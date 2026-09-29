@@ -28,7 +28,7 @@ export const PrestigeModal = ({ game, onClose, onPrestige, onPurchaseDoctrine }:
         <div className="prestige-seal" aria-hidden="true">巡</div>
         <p className="modal-eyebrow">SPREAD SATISFACTION ONCE MORE</p>
         <h2 id="prestige-title">世界を満たして、再布教</h2>
-        <p>現在の満足・設備・御利益を手放し、最初から始めます。実績・統計・救済印は残ります。</p>
+        <p>現在の満足・設備・御利益を手放し、最初から始めます。実績・統計・救済印と、研究所の解放・成果・進行中の研究は残ります。</p>
         <div className="prestige-reward">
           <span>今回の満足</span><strong>{formatNumber(game.runSatisfaction)}</strong>
           <i>→</i><span>獲得できる救済印</span><strong>+{gain}</strong>

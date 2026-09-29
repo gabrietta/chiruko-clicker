@@ -84,6 +84,10 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   { id: 'giant-chiruko', name: '見上げれば教祖', description: '巨大ちる子像を所有する', flavor: '景観条例より満足が優先された。', icon: '像', metric: 'itemOwned', itemId: 'giant-statue', target: 1 },
   { id: 'sora3-dream', name: 'まだ見ぬ映像世界', description: '架空の進化版Sora3を所有する', flavor: '存在しないなら、満足教で想像すればよい。', icon: '夢', metric: 'itemOwned', itemId: 'sora-3', target: 1, hidden: true },
   { id: 'sora4-dream-realm', name: '夢想圏の開門', description: 'Sora4を1つ所有する', flavor: '雲の向こう側から、赤い夢が満足を運んできます。', icon: 'S4', metric: 'itemOwned', itemId: 'sora-4', target: 1, hidden: true },
+  { id: 'research-1', name: '星図の第一頁', description: '研究を1段階完了する', flavor: '宇宙は、まず一枚の地図から。', icon: '☆', metric: 'researchCompleted', target: 1 },
+  { id: 'research-4', name: '四つの観測点', description: '研究を4段階完了する', flavor: '星図が航路になりはじめました。', icon: '✧', metric: 'researchCompleted', target: 4 },
+  { id: 'research-8', name: '銀河研究主任', description: '研究を8段階完了する', flavor: '満足は、観測できるほど大きくなりました。', icon: '銀', metric: 'researchCompleted', target: 8, hidden: true },
+  { id: 'research-12', name: '宇宙の余白を満たす者', description: '12段階すべての研究を完了する', flavor: '次の宇宙へ、研究成果を持っていきましょう。', icon: '宇', metric: 'researchCompleted', target: 12, hidden: true },
 
   { id: 'lucky-1', name: '救済の欠片', description: 'きらめく救済を1回つかまえる', flavor: '見逃さないこともまた徳。', icon: '✦', metric: 'luckyEvents', target: 1 },
   { id: 'lucky-7', name: '七つの救済', description: 'きらめく救済を7回つかまえる', flavor: '七つ集めても願いは自力で。', icon: '七', metric: 'luckyEvents', target: 7, hidden: true },

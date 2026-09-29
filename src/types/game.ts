@@ -48,6 +48,7 @@ export type AchievementMetric =
   | 'worshipPolicyChanges'
   | 'sleepyWakes'
   | 'maxSleepyChirukos'
+  | 'researchCompleted'
 
 export interface AchievementDefinition {
   id: string
@@ -166,6 +167,10 @@ export interface GameState {
   lastPlayedAt: number
   anomalyFrozen: boolean
   anomalyReason: string
+  researchUnlocked: boolean
+  researchLevels: [number, number, number]
+  researchCompleted: number
+  researchProject: { branch: number; level: number; finishAt: number } | null
 }
 
 export interface OfflineReport {

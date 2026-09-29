@@ -15,6 +15,7 @@ import {
 import type { GameState, ShopItemDefinition } from '../types/game'
 import { formatMultiplier, formatNumber } from '../utils/format'
 import { assetPath } from '../utils/assetPath'
+import { getResearchClickMultiplier } from '../game/research'
 
 interface ShopProps {
   game: GameState
@@ -48,7 +49,7 @@ export const Shop = ({ game, lastPurchasedId, achievementMultiplier, productionM
     upgrade.effectType === 'clickMultiplier' && game.purchasedUpgradeIds.includes(upgrade.id)
       ? multiplier * upgrade.effectValue
       : multiplier
-  ), 1) * getVirtueMarkMultiplier(game.virtueMarks) * getActiveSeason().clickMultiplier * getWorshipPolicy(game.worshipPolicy).clickMultiplier
+  ), 1) * getVirtueMarkMultiplier(game.virtueMarks) * getResearchClickMultiplier(game.researchLevels) * getActiveSeason().clickMultiplier * getWorshipPolicy(game.worshipPolicy).clickMultiplier
 
   const showTooltip = (itemId: string, element: HTMLElement, autoHide = false) => {
     const rect = element.getBoundingClientRect()

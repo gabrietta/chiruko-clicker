@@ -21,6 +21,7 @@ import {
   getSleepyChirukoSlots,
   isUpgradeUnlocked,
 } from '../game/calculations'
+import { accelerateResearchProject, claimResearchProject, getResearchUnlock, startResearchProject } from '../game/research'
 import { clearSavedGame, createInitialGame, decodeSaveData, encodeSaveData, loadGame, saveGame } from '../game/storage'
 import type { ActiveBuff, AchievementDefinition, GameState, LuckyEventResult, OfflineReport } from '../types/game'
 import { logDiagnostic } from '../game/diagnostics'
@@ -109,6 +110,7 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
     previous.virtueMarks,
     previous.purchasedDoctrineIds,
     previous.worshipPolicy,
+    previous.researchLevels,
   )
   const baseClick = getClickPower(
     previous.inventory,
@@ -116,6 +118,7 @@ const getAnomalyReason = (previous: GameState, candidate: GameState, buffs: Acti
     previous.virtueMarks,
     previous.purchasedDoctrineIds,
     previous.worshipPolicy,
+    previous.researchLevels,
   )
   const production = baseProduction * getBuffMultiplier(buffs, 'production')
   const click = baseClick * getClickComboMultiplier(50) * getBuffMultiplier(buffs, 'click')
@@ -178,8 +181,9 @@ export const useGame = () => {
       game.virtueMarks,
       game.purchasedDoctrineIds,
       game.worshipPolicy,
+      game.researchLevels,
     ) * getClickComboMultiplier(game.clickCombo) * getBuffMultiplier(activeBuffs, 'click'),
-    [activeBuffs, game.clickCombo, game.inventory, game.purchasedDoctrineIds, game.purchasedUpgradeIds, game.virtueMarks, game.worshipPolicy],
+    [activeBuffs, game.clickCombo, game.inventory, game.purchasedDoctrineIds, game.purchasedUpgradeIds, game.virtueMarks, game.worshipPolicy, game.researchLevels],
   )
   const satisfactionPerSecond = useMemo(
     () => getSatisfactionPerSecond(
@@ -189,8 +193,9 @@ export const useGame = () => {
       game.virtueMarks,
       game.purchasedDoctrineIds,
       game.worshipPolicy,
+      game.researchLevels,
     ) * getBuffMultiplier(activeBuffs, 'production'),
-    [activeBuffs, game.inventory, game.purchasedDoctrineIds, game.purchasedUpgradeIds, game.unlockedAchievementIds.length, game.virtueMarks, game.worshipPolicy],
+    [activeBuffs, game.inventory, game.purchasedDoctrineIds, game.purchasedUpgradeIds, game.unlockedAchievementIds.length, game.virtueMarks, game.worshipPolicy, game.researchLevels],
   )
 
   useEffect(() => {
@@ -216,7 +221,7 @@ export const useGame = () => {
 
   const commit = useCallback((candidate: GameState, persistNow = false) => {
     const current = syncDailyOmen(gameRef.current)
-    const prepared = syncDailyOmen(candidate)
+    const prepared = { ...syncDailyOmen(candidate), researchUnlocked: getResearchUnlock(candidate) }
     if (current !== gameRef.current) {
       gameRef.current = current
       setGame(current)
@@ -267,6 +272,7 @@ export const useGame = () => {
         gameRef.current.virtueMarks,
         gameRef.current.purchasedDoctrineIds,
         gameRef.current.worshipPolicy,
+        gameRef.current.researchLevels,
       ) * getBuffMultiplier(activeBuffsRef.current, 'production')
       if (rate <= 0 && playGain <= 0) return
       const gain = rate * elapsed
@@ -353,6 +359,7 @@ export const useGame = () => {
       previous.virtueMarks,
       previous.purchasedDoctrineIds,
       previous.worshipPolicy,
+      previous.researchLevels,
     ) * getClickComboMultiplier(nextCombo) * getBuffMultiplier(activeBuffsRef.current, 'click')
     commit({
       ...previous,
@@ -441,6 +448,7 @@ export const useGame = () => {
       gameRef.current.virtueMarks,
       gameRef.current.purchasedDoctrineIds,
       gameRef.current.worshipPolicy,
+      gameRef.current.researchLevels,
     )
     const baseReward = Math.ceil(Math.max(
       25,
@@ -451,6 +459,7 @@ export const useGame = () => {
         gameRef.current.virtueMarks,
         gameRef.current.purchasedDoctrineIds,
         gameRef.current.worshipPolicy,
+        gameRef.current.researchLevels,
       ) * 20,
     ) * getActiveSeason().luckyMultiplier)
     const liveBuffs = activeBuffsRef.current.filter((active) => active.expiresAt > now)
@@ -564,9 +573,13 @@ export const useGame = () => {
       maxBuffCombo: Math.max(gameRef.current.maxBuffCombo, comboCount),
       luckyChainsCompleted: gameRef.current.luckyChainsCompleted + (chainCompleted ? 1 : 0),
     }
-    const next = commit(luckyCandidate, true)
-    if (next.totalLuckyRewards < luckyCandidate.totalLuckyRewards) {
+    const accelerated = accelerateResearchProject(luckyCandidate, 30, now)
+    const next = commit(accelerated.game, true)
+    if (next.luckyEventsClicked !== luckyCandidate.luckyEventsClicked) {
       return { amount: 0, message: '', buff: null, chainStarted: false, chainCompleted: false, eventType: '' }
+    }
+    if (accelerated.shortened > 0) {
+      message += ` 研究が${accelerated.shortened}秒短縮されました`
     }
     return { amount: reward, message, buff, chainStarted, chainCompleted, eventType }
   }, [chainRemaining, commit, luckyEventVisible])
@@ -669,6 +682,22 @@ export const useGame = () => {
     }, true)
   }, [commit])
 
+  const startResearch = useCallback((branch: number) => {
+    const current = gameRef.current
+    const next = startResearchProject(current, branch)
+    if (next === current) return false
+    const committed = commit(next, true)
+    return committed.researchProject?.branch === branch
+  }, [commit])
+
+  const claimResearch = useCallback(() => {
+    const current = gameRef.current
+    const next = claimResearchProject(current)
+    if (next === current) return false
+    const committed = commit(next, true)
+    return committed.researchProject === null && committed.researchCompleted > current.researchCompleted
+  }, [commit])
+
   const prestige = useCallback(() => {
     const gain = getPrestigeGain(gameRef.current.runSatisfaction)
     if (gain <= 0) return 0
@@ -716,6 +745,10 @@ export const useGame = () => {
       startedAt: gameRef.current.startedAt,
       unlockedAchievementIds: gameRef.current.unlockedAchievementIds,
       viewedMemorialIds: gameRef.current.viewedMemorialIds,
+      researchUnlocked: gameRef.current.researchUnlocked,
+      researchLevels: gameRef.current.researchLevels,
+      researchCompleted: gameRef.current.researchCompleted,
+      researchProject: gameRef.current.researchProject,
     }, true)
     setLuckyEventVisible(false)
     setActiveBuffs([])
@@ -833,5 +866,7 @@ export const useGame = () => {
     resumeFromAnomaly,
     exportSave,
     importSave,
+    startResearch,
+    claimResearch,
   }
 }
