@@ -156,7 +156,7 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-rows: auto minmax(370px, 1fr) auto;
+  grid-template-rows: minmax(370px, 1fr) auto auto auto;
   padding: clamp(24px, 3vw, 46px) clamp(24px, 4.2vw, 76px) 28px;
   overflow: hidden;
 }
@@ -1039,7 +1039,7 @@
 
   .main-stage {
     min-height: auto;
-    grid-template-rows: auto 470px auto;
+    grid-template-rows: 470px auto auto auto;
     padding: 26px 18px 20px;
   }
 
@@ -1120,7 +1120,7 @@
   }
 
   .main-stage {
-    grid-template-rows: auto 370px auto;
+    grid-template-rows: 370px auto auto auto;
     padding-top: 23px;
   }
 
@@ -1503,7 +1503,7 @@
 
 .busy-edition .main-stage {
   min-height: 650px;
-  grid-template-rows: auto minmax(350px, 1fr) auto auto;
+  grid-template-rows: minmax(350px, 1fr) auto auto auto;
   padding-top: 34px;
   border-right: 2px solid #c28a28;
 }
@@ -2460,7 +2460,7 @@
 
   .busy-edition .main-stage {
     min-height: auto;
-    grid-template-rows: auto 470px auto auto;
+    grid-template-rows: 470px auto auto auto;
     border-right: 0;
     border-bottom: 2px solid #c28a28;
   }
@@ -2503,7 +2503,7 @@
   }
 
   .busy-edition .main-stage {
-    grid-template-rows: auto 192px auto auto;
+    grid-template-rows: minmax(330px, auto) auto auto auto;
     padding-inline: 12px;
   }
 
@@ -3465,6 +3465,68 @@
 .click-combo-meter b { margin-left: 3px; color: #b24c72; font-size: 13px; }
 .click-combo-meter small { margin-left: 4px; color: #9a8c91; font-size: 7px; font-weight: 700; }
 
+/* Effects live in normal flow so they stay readable without covering Chiruko. */
+.effects-strip {
+  z-index: 4;
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  margin: 6px 0 8px;
+  padding: 7px;
+  border: 1px solid #d5b86b;
+  border-radius: 10px;
+  color: #332c31;
+  background: #fff8e8;
+  box-shadow: 0 3px 0 rgba(194, 138, 40, .12);
+  overflow: hidden;
+}
+.effects-empty { display: grid; width: 100%; place-items: center; color: #766c73; font-size: 12px; }
+.effects-strip .click-combo-meter {
+  position: static;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid #d8a84c;
+  border-left-width: 3px;
+  border-radius: 7px;
+  color: #4e3b42;
+  background: #fffdf7;
+  font-size: 14px;
+}
+.effects-strip .click-combo-meter b { font-size: 16px; }
+.effects-strip .click-combo-meter small { color: #766c73; font-size: 12px; }
+.effects-strip .active-buff-stack {
+  position: static;
+  width: auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 6px;
+  pointer-events: none;
+}
+.effects-strip .active-buff-banner {
+  position: relative;
+  inset: auto;
+  min-width: 0;
+  width: auto;
+  min-height: 50px;
+  padding: 6px 9px 10px;
+  border: 1px solid #c9a34a;
+  color: #332c31;
+  background: #fffdf7;
+  box-shadow: 2px 2px 0 rgba(194, 138, 40, .16);
+}
+.effects-strip .active-buff-banner:not(:first-child) { transform: none; }
+.effects-strip .active-buff-banner small { color: #8c6720; font-size: 12px; }
+.effects-strip .active-buff-banner strong { color: #332c31; font-size: 14px; }
+.effects-strip .active-buff-banner em { color: #5f555b; font-size: 12px; }
+.effects-strip .active-buff-banner > i { background: #e3d8bd; }
+
 .audio-settings { padding: 10px 14px; }
 .settings-section-title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 5px; }
 .settings-section-title span { font-size: 8px; }
@@ -3799,7 +3861,7 @@
   }
 
   .three-panel-grid .main-stage {
-    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
     padding: 10px clamp(12px, 1.4vw, 27px) 10px;
     overflow: hidden;
   }

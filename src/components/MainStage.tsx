@@ -222,26 +222,6 @@ export const MainStage = ({
 
         <div className="chiruko-quote"><span aria-hidden="true">教祖曰く</span>{quote}</div>
 
-        {activeBuffs.length > 0 && (
-          <div className="active-buff-stack" role="status" aria-label={`${activeBuffs.length}個の救済効果が発動中`}>
-            {activeBuffs.map((buff, index) => {
-              const remainingSeconds = Math.max(0, Math.ceil((buff.expiresAt - Date.now()) / 1000))
-              const progress = Math.max(0, Math.min(100, ((buff.expiresAt - Date.now()) / (buff.expiresAt - buff.startedAt)) * 100))
-              return (
-                <div className={`active-buff-banner buff-${buff.kind}`} key={buff.id}>
-                  <span aria-hidden="true">{index === 0 ? '✦' : '×'}</span>
-                  <div><small>{activeBuffs.length > 1 ? `救済コンボ ×${activeBuffs.length}` : '救済効果・発動中'}</small><strong>{buff.name}</strong><em>{buff.description}・残り{remainingSeconds}秒</em></div>
-                  <i aria-hidden="true"><b style={{ width: `${progress}%` }} /></i>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {clickCombo > 1 && (
-          <div className="click-combo-meter" role="status" aria-label={`クリックコンボ ${clickCombo}`}>ひとさわり連祷 <b>×{clickCombo}</b><small>（最大+15%）</small></div>
-        )}
-
         <button
           type="button"
           className="character-button"
@@ -310,6 +290,27 @@ export const MainStage = ({
             {particle.glyph}
           </span>
         ))}
+      </div>
+
+      <div className="effects-strip" aria-label="発動中の効果">
+        {clickCombo > 1 && (
+          <div className="click-combo-meter" role="status" aria-label={`クリックコンボ ${clickCombo}`}>ひとさわり連祷 <b>×{clickCombo}</b><small>（最大+15%）</small></div>
+        )}
+        {activeBuffs.length > 0 ? (
+          <div className="active-buff-stack" role="status" aria-label={`${activeBuffs.length}個の救済効果が発動中`}>
+            {activeBuffs.map((buff, index) => {
+              const remainingSeconds = Math.max(0, Math.ceil((buff.expiresAt - Date.now()) / 1000))
+              const progress = Math.max(0, Math.min(100, ((buff.expiresAt - Date.now()) / (buff.expiresAt - buff.startedAt)) * 100))
+              return (
+                <div className={`active-buff-banner buff-${buff.kind}`} key={buff.id}>
+                  <span aria-hidden="true">{index === 0 ? '✦' : '×'}</span>
+                  <div><small>{activeBuffs.length > 1 ? `救済コンボ ×${activeBuffs.length}` : '救済効果・発動中'}</small><strong>{buff.name}</strong><em>{buff.description}・残り{remainingSeconds}秒</em></div>
+                  <i aria-hidden="true"><b style={{ width: `${progress}%` }} /></i>
+                </div>
+              )
+            })}
+          </div>
+        ) : clickCombo <= 1 ? <span className="effects-empty">発動中の効果はありません</span> : null}
       </div>
 
       <div className="stage-bottom busy-stats">
