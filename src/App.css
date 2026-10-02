@@ -2177,6 +2177,30 @@
 .research-running progress { width: 100%; height: 10px; accent-color: #b84f76; }
 .research-running button { min-height: 44px; }
 .research-balance span { display: block; margin-top: 4px; font-size: 12px; }
+
+/* The archive header is dark; keep its close control visible and touchable. */
+.achievements-modal .modal-close {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e6bd55;
+  color: #ffe29a;
+  background: rgba(255, 255, 255, 0.08);
+  line-height: 1;
+}
+
+.achievements-modal .modal-close:hover,
+.achievements-modal .modal-close:focus-visible {
+  color: #2b282e;
+  background: #f2cb70;
+  outline: 2px solid #fff4c7;
+  outline-offset: 2px;
+}
 .research-branch.observing { border-color: #b84f76; background: #fff3f8; }
 .research-levels .observing { color: #b84f76; font-weight: 900; }
 .research-complete { padding: 15px; border: 1px solid #c28a28; background: #fff4cf; text-align: center; }
