@@ -5,7 +5,7 @@ export const DAILY_OMENS: DailyOmenDefinition[] = [
   { id: 'gentle-touch', name: 'おでこにご挨拶', description: 'ちる子を25回さわる', flavor: '本日の礼拝、たいへん丁寧でした。', metric: 'manualClicks', target: 25 },
   { id: 'small-offering', name: '小さな寄進', description: '設備や御利益を3回購入する', flavor: '机のすみへ、ささやかな奉納。', metric: 'totalPurchases', target: 3 },
   { id: 'watch-the-sparkle', name: 'きらめきを見つめて', description: '救済の欠片を1回つかまえる', flavor: '見逃さない眼差しも、立派な徳です。', metric: 'luckyEvents', target: 1 },
-  { id: 'quiet-devotion', name: '静かな五分間', description: '5分間、満足計画を続ける', flavor: '何もしない時間にも、ちゃんと意味があります。', metric: 'playSeconds', target: 300 },
+  { id: 'quiet-devotion', name: '静かな五分間', description: 'ゲーム画面を表示して5分間、満足計画を続ける', flavor: '何もしない時間にも、ちゃんと意味があります。', metric: 'playSeconds', target: 300 },
   { id: 'busy-desk', name: '机をにぎやかに', description: '設備を合計10個所有する', flavor: '少し狭いくらいが、ちょうどよい礼拝所です。', metric: 'totalOwned', target: 10 },
 ]
 
@@ -47,5 +47,23 @@ export const syncDailyOmen = (game: GameState, timestamp = Date.now()) => {
   }
 }
 
+export const prepareDailyOmenUpdate = (previous: GameState, candidate: GameState, timestamp = Date.now()) => {
+  const synced = syncDailyOmen(previous, timestamp)
+  if (candidate.dailyOmenDate !== synced.dailyOmenDate || candidate.dailyOmenId !== synced.dailyOmenId) {
+    return {
+      ...candidate,
+      dailyOmenDate: synced.dailyOmenDate,
+      dailyOmenId: synced.dailyOmenId,
+      dailyOmenStartValue: synced.dailyOmenStartValue,
+      dailyOmenCompleted: synced.dailyOmenCompleted,
+    }
+  }
+  return candidate
+}
+
 export const getOmenProgress = (game: GameState, omen: DailyOmenDefinition) =>
-  Math.max(0, getOmenMetricValue(game, omen.metric) - game.dailyOmenStartValue)
+  game.dailyOmenCompleted && game.dailyOmenId === omen.id
+    ? omen.target
+    : omen.metric === 'totalOwned'
+    ? Math.max(0, getOmenMetricValue(game, omen.metric))
+    : Math.max(0, getOmenMetricValue(game, omen.metric) - game.dailyOmenStartValue)

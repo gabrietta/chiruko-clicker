@@ -3,7 +3,7 @@ import { GAME_CONFIG, SHOP_ITEMS } from '../config/gameConfig'
 import { getActiveSeason } from '../config/seasons'
 import { UPGRADES } from '../config/upgrades'
 import { ALL_COSMETICS, isCosmeticUnlocked } from '../config/cosmetics'
-import { getDailyOmen, getOmenProgress, syncDailyOmen } from '../config/omens'
+import { getDailyOmen, getOmenProgress, prepareDailyOmenUpdate, syncDailyOmen } from '../config/omens'
 import {
   areDoctrineRequirementsMet,
   DOCTRINES,
@@ -220,8 +220,9 @@ export const useGame = () => {
   }, [])
 
   const commit = useCallback((candidate: GameState, persistNow = false) => {
-    const current = syncDailyOmen(gameRef.current)
-    const prepared = { ...syncDailyOmen(candidate), researchUnlocked: getResearchUnlock(candidate) }
+    const syncTimestamp = Date.now()
+    const current = syncDailyOmen(gameRef.current, syncTimestamp)
+    const prepared = { ...prepareDailyOmenUpdate(current, candidate, syncTimestamp), researchUnlocked: getResearchUnlock(candidate) }
     if (current !== gameRef.current) {
       gameRef.current = current
       setGame(current)
@@ -585,15 +586,17 @@ export const useGame = () => {
   }, [chainRemaining, commit, luckyEventVisible])
 
   const claimDailyOmen = useCallback(() => {
-    const current = syncDailyOmen(gameRef.current)
-    const omen = getDailyOmen()
+    const timestamp = Date.now()
+    const current = syncDailyOmen(gameRef.current, timestamp)
+    const omen = getDailyOmen(timestamp)
     if (current.dailyOmenCompleted || getOmenProgress(current, omen) < omen.target) return false
-    commit({
+    const beforeCount = current.dailyOmenCompletions
+    const committed = commit({
       ...current,
       dailyOmenCompleted: true,
-      dailyOmenCompletions: current.dailyOmenCompletions + 1,
+      dailyOmenCompletions: beforeCount + 1,
     }, true)
-    return true
+    return committed.dailyOmenCompleted && committed.dailyOmenCompletions === beforeCount + 1
   }, [commit])
 
   const setWorshipPolicy = useCallback((policy: GameState['worshipPolicy']) => {
