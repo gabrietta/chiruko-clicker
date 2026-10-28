@@ -171,6 +171,18 @@ export interface GameState {
   researchLevels: [number, number, number]
   researchCompleted: number
   researchProject: { branch: number; level: number; finishAt: number } | null
+  garden: GardenState
+}
+
+export interface GardenPlant { seedId: string; plantedAt: number }
+export interface GardenState {
+  unlocked: boolean
+  plots: (GardenPlant | null)[]
+  unlockedSeedIds: string[]
+  petals: number
+  totalHarvests: number
+  decorationIds: string[]
+  selectedDecorationId: string | null
 }
 
 export interface OfflineReport {

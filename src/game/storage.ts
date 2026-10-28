@@ -9,6 +9,7 @@ import { isWorshipPolicy } from '../config/worshipPolicies'
 import type { GameState, OfflineReport } from '../types/game'
 import { getResearchAdjustedOfflineCap, getSatisfactionPerSecond, getSleepyBankCap } from './calculations'
 import { normalizeResearch } from './research'
+import { createInitialGarden, normalizeGarden } from '../config/garden'
 
 const createInventory = () =>
   Object.fromEntries(SHOP_ITEMS.map((item) => [item.id, 0]))
@@ -61,6 +62,7 @@ export const createInitialGame = (): GameState => ({
   researchLevels: [0, 0, 0],
   researchCompleted: 0,
   researchProject: null,
+  garden: createInitialGarden(),
 })
 
 const finiteOr = (value: unknown, fallback: number) =>
@@ -150,6 +152,7 @@ export const decodeSaveData = (code: string): GameState => {
     anomalyFrozen: false,
     anomalyReason: '',
     ...normalizeResearch(parsed, (Array.isArray(parsed.unlockedAchievementIds) && parsed.unlockedAchievementIds.includes('sora-4-50')) || inventory['sora-4'] >= 50),
+    garden: normalizeGarden(parsed.garden, Object.values(inventory).reduce((sum, count) => sum + count, 0) >= 25 || finiteOr(parsed.totalPurchases, 0) >= 25),
   }
   return imported
 }
@@ -199,6 +202,7 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
     const normalizedResearch = normalizeResearch(parsed, (
       Array.isArray(parsed.unlockedAchievementIds) && parsed.unlockedAchievementIds.includes('sora-4-50')
     ) || (inventory['sora-4'] ?? 0) >= 50)
+    const normalizedGarden = normalizeGarden(parsed.garden, Object.values(inventory).reduce((sum, count) => sum + count, 0) >= 25 || finiteOr(parsed.totalPurchases, 0) >= 25)
 
     const knownCharacterSkins = new Set(
       ALL_COSMETICS.filter((cosmetic) => cosmetic.kind === 'character').map((cosmetic) => cosmetic.id),
@@ -297,6 +301,7 @@ export const loadGame = (): { game: GameState; offlineReport: OfflineReport | nu
         anomalyFrozen: false,
         anomalyReason: '',
         ...normalizedResearch,
+        garden: normalizedGarden,
       },
       offlineReport: rawElapsed >= 10 && earned >= 1
         ? {

@@ -22,6 +22,8 @@ import {
   isUpgradeUnlocked,
 } from '../game/calculations'
 import { accelerateResearchProject, claimResearchProject, getResearchUnlock, startResearchProject } from '../game/research'
+import { GARDEN_TEA_COST, GARDEN_TEA_SECONDS } from '../config/garden'
+import { buyGardenDecoration, clearGardenPlot, harvestGardenPlot, isGardenUnlocked, plantGardenSeed, selectGardenDecoration } from '../game/garden'
 import { clearSavedGame, createInitialGame, decodeSaveData, encodeSaveData, loadGame, saveGame } from '../game/storage'
 import type { ActiveBuff, AchievementDefinition, GameState, LuckyEventResult, OfflineReport } from '../types/game'
 import { logDiagnostic } from '../game/diagnostics'
@@ -222,7 +224,7 @@ export const useGame = () => {
   const commit = useCallback((candidate: GameState, persistNow = false) => {
     const syncTimestamp = Date.now()
     const current = syncDailyOmen(gameRef.current, syncTimestamp)
-    const prepared = { ...prepareDailyOmenUpdate(current, candidate, syncTimestamp), researchUnlocked: getResearchUnlock(candidate) }
+    const prepared = { ...prepareDailyOmenUpdate(current, candidate, syncTimestamp), researchUnlocked: getResearchUnlock(candidate), garden: { ...candidate.garden, unlocked: isGardenUnlocked(candidate) } }
     if (current !== gameRef.current) {
       gameRef.current = current
       setGame(current)
@@ -701,6 +703,47 @@ export const useGame = () => {
     return committed.researchProject === null && committed.researchCompleted > current.researchCompleted
   }, [commit])
 
+  const plantGarden = useCallback((index: number, seedId: string) => {
+    const next = plantGardenSeed(gameRef.current, index, seedId)
+    if (next === gameRef.current) return false
+    return commit(next, true).garden.plots[index]?.seedId === seedId
+  }, [commit])
+  const harvestGarden = useCallback((index: number) => {
+    const beforeHarvests = gameRef.current.garden.totalHarvests
+    const result = harvestGardenPlot(gameRef.current, index)
+    if (!result) return null
+    const committed = commit(result.game, true)
+    return committed.garden.totalHarvests === beforeHarvests + 1 ? { petals: result.petals, newSeedIds: result.newSeedIds } : null
+  }, [commit])
+  const clearGarden = useCallback((index: number) => {
+    const next = clearGardenPlot(gameRef.current, index)
+    if (next === gameRef.current) return false
+    return commit(next, true).garden.plots[index] === null
+  }, [commit])
+  const buyGarden = useCallback((id: string) => {
+    const next = buyGardenDecoration(gameRef.current, id)
+    if (next === gameRef.current) return false
+    return commit(next, true).garden.decorationIds.includes(id)
+  }, [commit])
+  const selectGarden = useCallback((id: string | null) => {
+    const next = selectGardenDecoration(gameRef.current, id)
+    if (next === gameRef.current) return false
+    return commit(next, true).garden.selectedDecorationId === id
+  }, [commit])
+  const brewGardenTea = useCallback(() => {
+    const current = gameRef.current
+    const live = activeBuffsRef.current.filter((buff) => buff.expiresAt > Date.now())
+    if (current.anomalyFrozen || !current.garden.unlocked || current.garden.petals < GARDEN_TEA_COST || live.some((buff) => buff.id === 'garden-tea') || live.length >= GAME_CONFIG.luckyEvent.maxConcurrentBuffs) return false
+    const now = Date.now()
+    const next = commit({ ...current, garden: { ...current.garden, petals: current.garden.petals - GARDEN_TEA_COST } }, true)
+    if (next.garden.petals !== current.garden.petals - GARDEN_TEA_COST) return false
+    const tea = { id: 'garden-tea', name: '庭園のお茶会', description: 'ひとさわりと自動生産が1.2倍', kind: 'both' as const, multiplier: 1.2, startedAt: now, expiresAt: now + GARDEN_TEA_SECONDS * 1000 }
+    const buffs = [...live, tea]
+    activeBuffsRef.current = buffs
+    setActiveBuffs(buffs)
+    return true
+  }, [commit])
+
   const prestige = useCallback(() => {
     const gain = getPrestigeGain(gameRef.current.runSatisfaction)
     if (gain <= 0) return 0
@@ -748,6 +791,7 @@ export const useGame = () => {
       startedAt: gameRef.current.startedAt,
       unlockedAchievementIds: gameRef.current.unlockedAchievementIds,
       viewedMemorialIds: gameRef.current.viewedMemorialIds,
+      garden: gameRef.current.garden,
       researchUnlocked: gameRef.current.researchUnlocked,
       researchLevels: gameRef.current.researchLevels,
       researchCompleted: gameRef.current.researchCompleted,
@@ -869,6 +913,12 @@ export const useGame = () => {
     resumeFromAnomaly,
     exportSave,
     importSave,
+    plantGarden,
+    harvestGarden,
+    clearGarden,
+    buyGarden,
+    selectGarden,
+    brewGardenTea,
     startResearch,
     claimResearch,
   }
