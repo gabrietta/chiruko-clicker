@@ -627,7 +627,7 @@ export const useGame = () => {
 
   const wakeSleepyChiruko = useCallback(() => {
     const current = gameRef.current
-    if (current.sleepyChirukos <= 0) { logDiagnostic('sleepy-wake-failure', 'sleepy', { count: 0 }, 'warn'); return 0 }
+    if (current.sleepyChirukos <= 0) { logDiagnostic('sleepy-wake-failure', 'sleepy', { count: 0 }, 'warn'); return null }
     logDiagnostic('sleepy-wake-request', 'sleepy', { count: current.sleepyChirukos })
     const bankShare = current.sleepyBank / current.sleepyChirukos
     const reward = bankShare * GAME_CONFIG.sleepyChiruko.wakeBonus
@@ -643,7 +643,7 @@ export const useGame = () => {
     const success = next.sleepyChirukos === current.sleepyChirukos - 1 &&
       next.sleepyTotalWoken === current.sleepyTotalWoken + 1
     logDiagnostic(success ? 'sleepy-wake-success' : 'sleepy-wake-failure', 'sleepy', { reward, count: next.sleepyChirukos }, success ? 'info' : 'warn')
-    return success ? reward : 0
+    return success ? reward : null
   }, [commit])
 
   const purchaseDoctrine = useCallback((doctrineId: string) => {

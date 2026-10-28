@@ -69,9 +69,9 @@ export const SideSystemsPanel = ({
           <div><small>DESK CORNER</small><h3>居眠りミニちる子</h3></div>
           <span className="side-system-count">{game.sleepyChirukos} / {sleepySlots || 0}人</span>
         </div>
-        <p className="side-system-description">設備25個から解放。眠っているあいだ、少しだけ満足を預かります。</p>
+        <p className="side-system-description">設備25個から解放。眠っているあいだ、少しだけ満足を預かります。眠っているミニちる子をタップしても起こせます。</p>
         <div className="sleepy-figures" aria-label={`居眠りミニちる子${game.sleepyChirukos}人`}>
-          {Array.from({ length: Math.max(1, sleepySlots) }, (_, index) => <span className={index < game.sleepyChirukos ? 'active' : ''} key={index}><img src={assetPath('/assets/characters/chiruko-sleep.png')} alt="" /></span>)}
+          {Array.from({ length: Math.max(1, sleepySlots) }, (_, index) => <button type="button" className={index < game.sleepyChirukos ? 'active' : ''} key={index} disabled={index >= game.sleepyChirukos} onClick={onWakeSleepyChiruko} aria-label={`居眠りミニちる子${index + 1}人目を起こす`}><img src={assetPath('/assets/characters/chiruko-sleep.png')} alt="" draggable="false" /></button>)}
         </div>
         <div className="side-system-progress sleepy-progress"><span style={{ width: `${sleepyPercent}%` }} /></div>
         <div className="side-system-meta"><span>預かり中 {formatNumber(game.sleepyBank)} 満足</span><em>起こすと少し多めに返ります</em></div>
